@@ -9,14 +9,17 @@ from protein_tune_rl.trainer import create_trainer
 
 class ProteinTuneRL:
 
-    def __init__(self, config, id=None):        
+    def __init__(self, config, mode):        
         
         # read the config file
         with open(config) as f:
             self.config = json.load(f)
 
         try:
-            self.trainer = create_trainer(config['trainer']['name'])(self.config)
+            if mode == "tune":
+                self.protein_tuner = create_trainer(config['trainer']['name'])(self.config)
+            if mode == "evaluate":
+                self.protein_tuner = create_trainer(config['trainer']['name'])(self.config)
         except:
             raise ValueError("------- INITIALIZING TRAINER FAILED --------")
 
@@ -24,7 +27,7 @@ class ProteinTuneRL:
 
     def train(self, n_run):
         print("------- TRAINER : START --------")
-        log = self.trainer.run()
+        log = self.protein_tuner.run()
         print("------- TRAINER : FINISHED --------")
 
         if log is not None:        
@@ -40,6 +43,7 @@ class ProteinTuneRL:
 @click.command()
 @click.option("-cf", "--config-file", type=str, default=None)
 @click.option("-r", "--runs", type=int, default=1)
+@click.option("-mode", "--mode", type=str, default="tune")
 
 def experiment(config_file, runs):
     print("======= RUNNING ProteinTuneRL EXPERIMENT =======")

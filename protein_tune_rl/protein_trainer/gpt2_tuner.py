@@ -1,4 +1,4 @@
-from protein_tuning_rl.trainer.trainer import Trainer
+from protein_tuning_rl.protein_tuner.protein_trainer import ProteinTrainer
 
 from protein_tuning_rl.models import create_model
 from protein_tuning_rl.dataset import create_dataset
@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-class GPT2Trainer(Trainer):
+class GPT2Trainer(ProteinTrainer):
     def __init__(self, config):
         self.config = config
 
