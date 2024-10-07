@@ -1,6 +1,8 @@
 from protein_tuning_rl.trainer.trainer import Trainer
 
 from protein_tuning_rl.models import create_model
+from protein_tuning_rl.dataset import create_dataset
+from protein_tuning_rl.dataloader import create_dataloader
 
 
 from copy import deepcopy
@@ -18,6 +20,8 @@ class GPT2Trainer(Trainer):
 
         self.iterations = self.config["trainer"]["iterations"]
         self.batch_size = self.config["trainer"]["batch_size"]
+        self.dataset = create_dataset(self.config['dataset']['data_directory'])
+        self.dataloader = create_dataloader(self.dataset, batch_size=self.batch_size, shuffle=True)
 
         self.model = create_model()
 

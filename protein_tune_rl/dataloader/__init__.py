@@ -1,3 +1,4 @@
-def create_dataloader(data_dir):
+from torch.utils.data import DataLoader
 
-    return NotImplementedError
+def create_dataloader(dataset, batch_size, shuffle=True):
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True)
