@@ -17,7 +17,7 @@ class ProteinTuneRL:
 
         try:
             if mode == "tune":
-                self.protein_tuner = create_trainer(config['trainer']['name'])(self.config)
+                self.protein_tuner = create_trainer(self.config['trainer']['name'])(self.config)
             if mode == "evaluate":
                 raise NotImplementedError
         except:
@@ -45,14 +45,14 @@ class ProteinTuneRL:
 @click.option("-r", "--runs", type=int, default=1)
 @click.option("-mode", "--mode", type=str, default="tune")
 
-def experiment(config_file, runs):
+def experiment(config_file, runs, mode):
     print("======= RUNNING ProteinTuneRL EXPERIMENT =======")
     print(f"======= TOTAL RUNS: {runs} =======\n \n")
     for run in range(runs):
         print(f"------- RUN {run} --------")
         torch.manual_seed(run)
         np.random.seed(run)
-        ProteinTuneRL(config_file).train(run)
+        ProteinTuneRL(config_file, mode).train(run)
 
     print(" ======= COMPLETED EXPERIMENT =======")
 

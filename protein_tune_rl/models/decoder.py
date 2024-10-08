@@ -6,7 +6,7 @@ from transformers import GPT2Config, GPT2LMHeadModel, AutoModelForCausalLM
 from transformers.modeling_outputs import CausalLMOutput
 import transformers
 import torch
-from amino_acid_tokenizer import AminoAcidTokenizer
+
 
 logger = logging.getLogger(__name__)
 

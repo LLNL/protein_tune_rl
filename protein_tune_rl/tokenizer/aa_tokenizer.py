@@ -3,7 +3,7 @@ from transformers import AutoTokenizer, PreTrainedTokenizer
 import transformers
 
 
-class AminoAcidTokenizer:
+class AATokenizer():
     def __init__(self, hf_config):
 
         self.tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained(hf_config)
@@ -19,7 +19,7 @@ class AminoAcidTokenizer:
     
 
     def __call__(self, sequence):
-        encoding = self.tokenizer(sequence, **self.kwargs)
+        encoding = self.tokenizer(sequence)
         input_ids = torch.tensor(encoding["input_ids"], dtype=torch.long)           
         
         return input_ids

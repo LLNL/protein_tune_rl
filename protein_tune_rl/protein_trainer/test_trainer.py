@@ -1,9 +1,9 @@
-from protein_tuning_rl.protein_tuner.protein_trainer import ProteinTrainer
+from protein_tune_rl.protein_trainer.trainer import Trainer
 
-from protein_tuning_rl.models import create_model
-from protein_tuning_rl.dataset import create_dataset
-from protein_tuning_rl.dataloader import create_dataloader
-from protein_tuning_rl.tokenizer import create_tokenizer
+from protein_tune_rl.models import create_model
+from protein_tune_rl.dataset import create_dataset
+from protein_tune_rl.dataloader import create_dataloader
+from protein_tune_rl.tokenizer import create_tokenizer
 
 
 from copy import deepcopy
@@ -15,7 +15,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-class TestTrainer(ProteinTrainer):
+class TestTrainer(Trainer):
     def __init__(self, config):
         self.config = config
 
@@ -36,11 +36,15 @@ class TestTrainer(ProteinTrainer):
 
     def run(self):
 
-        for __ in range(self.epochs):            
-        
+        for e in range(self.epochs):            
+            print("=== Epoch", e, "===")
             for batch_number, batch_seqeuence in enumerate(iter(self.dataloader)): 
                 input_ids = self.tokenizer(batch_seqeuence)
                 output = self.model(input_ids)
+
+                print("Batch number", batch_number, "; Output shape", output[0].shape)
+            
+            print("")
         
 
         return None
