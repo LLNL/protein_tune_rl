@@ -4,7 +4,7 @@ import numpy as np
 import json
 from datetime import datetime
 
-from protein_tune_rl.trainer import create_trainer
+from protein_tune_rl.protein_trainer import create_trainer
 
 
 class ProteinTuneRL:
@@ -19,7 +19,7 @@ class ProteinTuneRL:
             if mode == "tune":
                 self.protein_tuner = create_trainer(config['trainer']['name'])(self.config)
             if mode == "evaluate":
-                self.protein_tuner = create_trainer(config['trainer']['name'])(self.config)
+                raise NotImplementedError
         except:
             raise ValueError("------- INITIALIZING TRAINER FAILED --------")
 
