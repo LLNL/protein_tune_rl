@@ -9,8 +9,7 @@ from protein_tune_rl.protein_trainer import create_trainer
 
 class ProteinTuneRL:
 
-    def __init__(self, config, mode):        
-        
+    def __init__(self, config, mode):      
         # read the config file
         with open(config) as f:
             self.config = json.load(f)
