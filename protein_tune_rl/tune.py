@@ -30,9 +30,8 @@ class ProteinTuneRL:
         log = self.protein_tuner.run()
         print("------- TRAINER : FINISHED --------")
 
-        if log is not None:        
-            if self.config['trainer']["save_results"]:
-                log.write_to_disk(self.config, self.config['trainer']['name'], n_run)
+        if log is not None and self.config['trainer']["save_results"]:
+            log.write_to_disk(self.config, self.config['trainer']['name'], n_run)
 
 
 #######################################################################
@@ -44,7 +43,6 @@ class ProteinTuneRL:
 @click.option("-cf", "--config-file", type=str, default=None)
 @click.option("-r", "--runs", type=int, default=1)
 @click.option("-mode", "--mode", type=str, default="tune")
-
 def experiment(config_file, runs, mode):
     print("======= RUNNING ProteinTuneRL EXPERIMENT =======")
     print(f"======= TOTAL RUNS: {runs} =======\n \n")
