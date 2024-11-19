@@ -20,8 +20,8 @@ class ProteinTuneRL:
                 self.protein_tuner = create_trainer(self.config['trainer']['name'])(self.config)
             if mode == "evaluate":
                 raise NotImplementedError
-        except:
-            raise ValueError("------- INITIALIZING TRAINER FAILED --------")
+        except Exception as e:
+            raise ValueError("------- INITIALIZING TRAINER FAILED --------") from e
 
         print("------- INITIALIZED TRAINER --------")
 
