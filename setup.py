@@ -42,7 +42,7 @@ extras = {
         "flake8==5.0.4",
     ],
 }
-extras['all'] = list(set([item for group in extras.values() for item in group]))
+extras['all'] = list({item for group in extras.values() for item in group})
 
 setup(
     name='protein_tune_rl',
