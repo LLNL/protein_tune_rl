@@ -9,8 +9,7 @@ from protein_tune_rl.protein_trainer import create_trainer
 
 class ProteinTuneRL:
 
-    def __init__(self, config, mode):        
-        
+    def __init__(self, config, mode):      
         # read the config file
         with open(config) as f:
             self.config = json.load(f)
@@ -20,8 +19,8 @@ class ProteinTuneRL:
                 self.protein_tuner = create_trainer(self.config['trainer']['name'])(self.config)
             if mode == "evaluate":
                 raise NotImplementedError
-        except:
-            raise ValueError("------- INITIALIZING TRAINER FAILED --------")
+        except Exception as e:
+            raise ValueError("------- INITIALIZING TRAINER FAILED --------") from e
 
         print("------- INITIALIZED TRAINER --------")
 
@@ -30,9 +29,8 @@ class ProteinTuneRL:
         log = self.protein_tuner.run()
         print("------- TRAINER : FINISHED --------")
 
-        if log is not None:        
-            if self.config['trainer']["save_results"]:
-                log.write_to_disk(self.config, self.config['trainer']['name'], n_run)
+        if log is not None and self.config['trainer']["save_results"]:
+            log.write_to_disk(self.config, self.config['trainer']['name'], n_run)
 
 
 #######################################################################
@@ -44,7 +42,6 @@ class ProteinTuneRL:
 @click.option("-cf", "--config-file", type=str, default=None)
 @click.option("-r", "--runs", type=int, default=1)
 @click.option("-mode", "--mode", type=str, default="tune")
-
 def experiment(config_file, runs, mode):
     print("======= RUNNING ProteinTuneRL EXPERIMENT =======")
     print(f"======= TOTAL RUNS: {runs} =======\n \n")
