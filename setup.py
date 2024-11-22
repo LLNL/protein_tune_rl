@@ -40,6 +40,7 @@ extras = {
         "pytest",
         "black==22.8.0",
         "flake8==5.0.4",
+        "isort",
     ],
 }
 extras['all'] = list({item for group in extras.values() for item in group})
