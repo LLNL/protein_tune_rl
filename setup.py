@@ -29,13 +29,6 @@ required = [
 ]
 
 extras = {
-    "docs": [
-        "numpydoc>=1.1.0",
-        "sphinx>=4.2.0",
-        "sphinx-rtd-theme==1.0.0",
-        "sphinx-copybutton==0.4.0",
-        "sphinx-multiversion==0.2.4",
-    ],
     "dev": [
         "pytest",
         "black==22.8.0",
