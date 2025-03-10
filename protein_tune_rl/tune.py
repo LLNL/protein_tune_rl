@@ -1,36 +1,68 @@
-import click
-import torch
-import numpy as np
 import json
 from datetime import datetime
+from pathlib import Path
 
+import click
+import numpy as np
+import torch
+
+from protein_tune_rl import logger
+from protein_tune_rl.protein_evaluator import create_evaluator
 from protein_tune_rl.protein_trainer import create_trainer
 
 
 class ProteinTuneRL:
-
-    def __init__(self, config, mode):      
+    def __init__(self, config, mode):
         # read the config file
         with open(config) as f:
             self.config = json.load(f)
 
         try:
             if mode == "tune":
-                self.protein_tuner = create_trainer(self.config['trainer']['name'])(self.config)
-            if mode == "evaluate":
-                raise NotImplementedError
+                self.exp_output_dir = (
+                    self.config['experiment_directory']
+                    + self.config['trainer']['name']
+                    + f"/{self.config['dataset']['reward']}"
+                    + f"/{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}_"
+                    + self.config['trainer']['name']
+                    + '_steps_'
+                    + str(self.config['trainer']['total_optimization_steps'])
+                    + '_bs_'
+                    + str(self.config['trainer']['batch_size'])
+                    + '_lr_'
+                    + str(self.config['trainer']['learning_rate'])
+                )
+
+                Path(self.exp_output_dir).mkdir(parents=True, exist_ok=True)
+                self.protein_tuner = create_trainer(self.config['trainer']['name'])(
+                    self.config
+                )
+
+            if mode == "eval":
+                self.exp_output_dir = (
+                    self.config['experiment_directory']
+                    + "/eval/"
+                    + str(datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
+                    + '_'
+                    + self.config['evaluator']['name']
+                )
+
+                Path(self.exp_output_dir).mkdir(parents=True, exist_ok=True)
+                self.protein_tuner = create_evaluator(self.config['evaluator']['name'])(
+                    self.config
+                )
         except Exception as e:
-            raise ValueError("------- INITIALIZING TRAINER FAILED --------") from e
+            raise logger.error(f"Error: {e}") from e
 
-        print("------- INITIALIZED TRAINER --------")
+        with open(f"{self.exp_output_dir}/config.json", "w") as outfile:
+            json.dump(self.config, outfile)
 
-    def train(self, n_run):
-        print("------- TRAINER : START --------")
-        log = self.protein_tuner.run()
-        print("------- TRAINER : FINISHED --------")
+        logger.info("Initialized ProtTuneRL")
 
-        if log is not None and self.config['trainer']["save_results"]:
-            log.write_to_disk(self.config, self.config['trainer']['name'], n_run)
+    def tune(self, n_run):
+        logger.info("Starting ProtTuneRL")
+        __ = self.protein_tuner.run(self.exp_output_dir)
+        logger.info("Finished ProtTuneRL")
 
 
 #######################################################################
@@ -43,15 +75,16 @@ class ProteinTuneRL:
 @click.option("-r", "--runs", type=int, default=1)
 @click.option("-mode", "--mode", type=str, default="tune")
 def experiment(config_file, runs, mode):
-    print("======= RUNNING ProteinTuneRL EXPERIMENT =======")
-    print(f"======= TOTAL RUNS: {runs} =======\n \n")
+
+    logger.info("Running ProteinTuneRL Experiment")
+    logger.info(f"Total runs: {runs}")
     for run in range(runs):
-        print(f"------- RUN {run} --------")
+        logger.info(f"Run {run}")
         torch.manual_seed(run)
         np.random.seed(run)
-        ProteinTuneRL(config_file, mode).train(run)
+        ProteinTuneRL(config_file, mode).tune(run)
 
-    print(" ======= COMPLETED EXPERIMENT =======")
+    logger.info("Completed experiment")
 
 
 if __name__ == "__main__":

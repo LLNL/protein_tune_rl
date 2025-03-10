@@ -3,7 +3,6 @@ from distutils.core import setup
 
 required = [
     "numpy>=1.19",
-    "torch",
     "sympy",
     "pandas",
     "scikit-learn",
@@ -19,13 +18,13 @@ required = [
     "chardet==3.0.4",
     "filelock==3.0.12",
     "idna==2.10",
-    "PyYAML==5.4.1",
+    "PyYAML",
     "requests==2.24.0",
     "sacremoses==0.0.43",
-    "tokenizers",
-    "torchvision",
+    #"tokenizers",
+    #"torchvision",
     "transformers",
-    "urllib3",
+    #"urllib3",
 ]
 
 extras = {
