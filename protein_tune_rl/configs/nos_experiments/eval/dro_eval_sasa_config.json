@@ -1,0 +1,47 @@
+
+{
+    "evaluator":
+        {
+            "name" : "sasa",             
+            "batch_size" : 1,
+            "model_name" : "dro"
+        },
+
+    "dataset" :
+        {
+            "name" : "dro_eval",             
+            "data_directory" : "../data/nos_data/eval_data_50.csv",
+            "chain" : "HC",
+            "region" : "HCDR3"   
+        },
+    
+    "experiment_directory" : "/p/vast1/hayes56/optlm/",
+    
+    "tokenizer" : 
+    {
+            "name" : "iglm_tokenizer",
+            "tokenizer_config" : "/usr/workspace/vaccines/abag_seq/weights/trained/optlm"
+    },
+
+    "metric":
+    {
+        "name" : ["sasa", "prot_gpt2_scoring"]
+    },
+
+    "collator" : 
+    {
+            "name" : "dro"   
+    },
+
+    "policy_model" : 
+    {
+        "name" : "iglm",
+        "dir" : "/usr/workspace/vaccines/abag_seq/weights/trained/optlm"
+            
+            
+    }
+
+   
+    
+     
+}
