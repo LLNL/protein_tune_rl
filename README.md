@@ -10,15 +10,15 @@
 
 ![Status](https://img.shields.io/badge/Status-Active-green.svg)
 ![Python](https://img.shields.io/badge/Python-3.9-blue.svg)
-[![Paper](https://img.shields.io/badge/Paper-Download-green.svg)](https://www.biorxiv.org/content/10.1101/2024.11.03.621763v1)
 ![CI](https://github.com/LLNL/protlib-designer/actions/workflows/ci.yml/badge.svg)
 
+## Introduction
 
-ProteinTuneRL is a minimal implementation of reinforcement learning fine-tuning for protein design.
+Welcome to the `ProteinTuneRL` repository! ProteinTuneRL is an innovative framework that applies reinforcement learning (RL) to the challenging task of protein design. Traditional protein engineering often grapples with the vastness of the protein sequence space, making it difficult to pinpoint sequences that exhibit optimal stability, activity, or specificity. By integrating state-of-the-art generative models with tailored RL algorithms, ProteinTuneRL provides a robust and systematic approach to fine-tuning these models, steering them toward generating protein sequences with desired properties.
 
 ## Basic installation
 
-- Basic installation can be done by running the following command: 
+Basic installation can be done by running the following command: 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
@@ -27,12 +27,12 @@ pip install -e '.'
 
 ### For development
 
-- Install the package in development mode with the following command:
+Install the package in development mode with the following command:
 ```bash
 pip install -e '.[dev]'
 ```
 
-- For convenience, you can use automatic editing tools like `black`, `flake8`, and `isort` to format your code. You can run the following commands to format your code:   
+For convenience, you can use automatic editing tools like `black`, `flake8`, and `isort` to format your code. You can run the following commands to format your code:   
 
 ```bash
 black -S -t py39 protein_tune_rl
