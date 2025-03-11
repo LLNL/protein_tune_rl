@@ -1,4 +1,18 @@
-# ProteinTuneRL
+<div align="left">
+  <h2>
+    <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/proteintunerl-logo-name-dark.png" width="350">
+    <source media="(prefers-color-scheme: light)" srcset="images/proteintunerl-logo-name-light.png" width="350">
+    <img alt="protlib-designer" src="images/proteintunerl-logo-name-light.png" width="350">
+    </picture>
+  </h2>
+</div>
+
+![Status](https://img.shields.io/badge/Status-Active-green.svg)
+![Python](https://img.shields.io/badge/Python-3.9-blue.svg)
+[![Paper](https://img.shields.io/badge/Paper-Download-green.svg)](https://www.biorxiv.org/content/10.1101/2024.11.03.621763v1)
+![CI](https://github.com/LLNL/protlib-designer/actions/workflows/ci.yml/badge.svg)
+
 
 ProteinTuneRL is a minimal implementation of reinforcement learning fine-tuning for protein design.
 
