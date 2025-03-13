@@ -34,6 +34,9 @@ extras = {
         "flake8==5.0.4",
         "isort",
     ],
+    "folding": [
+        "igfold"
+    ]
 }
 extras['all'] = list({item for group in extras.values() for item in group})
 

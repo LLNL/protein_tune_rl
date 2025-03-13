@@ -26,6 +26,9 @@ class Decoder(nn.Module):
             attention_mask=attention_mask,
         )
 
+    def save(self, path) -> None:
+        self.model.save_pretrained(path)
+
 
 class DecoderWithLinearHead(nn.Module):
     def __init__(self, model, name, train_all_params):

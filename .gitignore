@@ -1,1 +1,6 @@
-protein_tune_rl.egg-info
+*.DS_Store
+*.pyc
+*.egg*
+*.vscode
+*.pdb
+*.fasta

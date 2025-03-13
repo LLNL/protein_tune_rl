@@ -1,7 +1,6 @@
-import warnings
-
 import pandas as pd
 import torch
+import torch.distributed as dist
 
 from protein_tune_rl import logger
 from protein_tune_rl.collator import create_collator
@@ -12,11 +11,10 @@ from protein_tune_rl.models import create_model
 from protein_tune_rl.protein_evaluator.evaluator import Evaluator
 from protein_tune_rl.tokenizer import create_tokenizer
 
-warnings.filterwarnings("ignore")
-
 
 class DROEvaluator(Evaluator):
     def __init__(self, config):
+        assert dist.get_world_size() == 1
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.batch_size = self.config["evaluator"]["batch_size"]

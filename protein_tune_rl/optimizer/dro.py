@@ -1,4 +1,5 @@
 import torch
+import torch.distributed as dist
 
 from protein_tune_rl import logger
 
@@ -107,6 +108,8 @@ class DRO:
                 * torch.pow((log_ratio * loss_mask).sum(-1) / loss_denom, 2)
             ).mean()
         )
+        dist.all_reduce(policy_loss, dist.ReduceOp.SUM)
+        policy_loss /= dist.get_world_size()
 
         value_loss = (
             (
@@ -116,5 +119,7 @@ class DRO:
             )
             * value
         ).mean()
+        dist.all_reduce(value_loss, dist.ReduceOp.SUM)
+        value_loss /= dist.get_world_size()
 
         return policy_loss, value_loss
