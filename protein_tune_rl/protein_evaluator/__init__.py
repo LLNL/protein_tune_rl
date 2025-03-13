@@ -13,3 +13,10 @@ def create_evaluator(name):
         from protein_tune_rl.protein_evaluator.dro_evaluator import DROEvaluator
 
         return DROEvaluator
+
+    if name == "online_rl_evaluator":
+        from protein_tune_rl.protein_evaluator.online_rl_evaluator import (
+            OnlineRLEvaluator,
+        )
+
+        return OnlineRLEvaluator
