@@ -109,6 +109,7 @@ flake8 --ignore=E501,E203,W503 protein_tune_rl
 isort protein_tune_rl # isort will automatically sort imports in the correct order
 ```
 
+<<<<<<< HEAD
 ## Installation on Lassen
 
 <details>
@@ -150,3 +151,5 @@ lrun -T4 -N2 python tune.py -cf configs/ft_iglm_folding.json
 ```
 
 </details>
+=======
+>>>>>>> 66c3e15 (online RL)
