@@ -43,7 +43,6 @@ class DROCollator:
         input_sequences = self._pad_ragged_tensors(tokenized_sequences)
         input_completions = self._pad_ragged_tensors(tokenized_completions)
         input_mask = self._pad_ragged_tensors(mask)
-
         return input_sequences, input_completions, input_mask
 
     def __call__(self, batch, eval=False):
