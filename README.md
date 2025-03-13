@@ -22,8 +22,7 @@ The main objective of this project is :
 
 $$
 \max_{\pi_{\theta}} \left(
-\underbrace{\mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi_{\theta}(y|x)} \left[ r(x, y) \right]}_{\substack{\text{generate sequences} \\ \text{with favorable properties}}}
-- \beta\, \underbrace{\mathbb{D}_{\text{KL}} \left[ \pi_{\theta}(y|x) \,\|\, \pi_{\text{ref}}(y|x) \right]}_{\substack{\text{maintain the likelihood} \\ \text{of the original model}}}
+\underbrace{\mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi_{\theta}(y|x)} \left[ r(x, y) \right]}_{\substack{\text{generate sequences} \\ \text{with favorable properties}}} - \beta\, \underbrace{\mathbb{D}_{\text{KL}} \left[ \pi_{\theta}(y|x) \,\|\, \pi_{\text{ref}}(y|x) \right]}_{\substack{\text{maintain the likelihood} \\ \text{of the original model}}}
 \right)
 $$
 
