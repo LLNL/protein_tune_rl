@@ -16,6 +16,55 @@
 
 Welcome to the `ProteinTuneRL` repository! ProteinTuneRL is an innovative framework that applies reinforcement learning (RL) to the challenging task of protein design. Traditional protein engineering often grapples with the vastness of the protein sequence space, making it difficult to pinpoint sequences that exhibit optimal stability, activity, or specificity. By integrating state-of-the-art generative models with tailored RL algorithms, ProteinTuneRL provides a robust and systematic approach to fine-tuning these models, steering them toward generating protein sequences with desired properties.
 
+## Theoretical Background
+
+The main objective of this project is :
+
+$$
+\max_{\pi_{\theta}} \left(
+\underbrace{\mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi_{\theta}(y|x)} \left[ r(x, y) \right]}_{\substack{\text{generate sequences} \\ \text{with favorable properties}}}
+- \beta\, \underbrace{\mathbb{D}_{\text{KL}} \left[ \pi_{\theta}(y|x) \,\|\, \pi_{\text{ref}}(y|x) \right]}_{\substack{\text{maintain the likelihood} \\ \text{of the original model}}}
+\right)
+$$
+
+Recall that the definition of the KL divergence is:
+$$
+\mathbb{D}_{\text{KL}} \left[ \pi_{\theta}(y|x) \,\|\, \pi_{\text{ref}}(y|x) \right] = \mathbb{E}_{y \sim \pi_{\theta}(y|x)} \left[ \log \frac{\pi_{\theta}(y|x)}{\pi_{\text{ref}}(y|x)} \right].
+$$
+
+Therefore, the objective can be rewritten as:
+$$
+\max_{\pi_{\theta}} \left(
+\mathbb{E}_{x,y} \left[ 
+r(x, y) - \beta\, \log \frac{\pi_{\theta}(y|x)}{\pi_{\text{ref}}(y|x)}
+\right]
+\right).
+$$
+
+where:
+
+
+### PPO Loss
+
+In our case, $\pi_{\text{ref}}$ acts as a fixed baseline (or pre-trained model). We can define the ratio:
+$$
+r_t(\theta) = \frac{\pi_\theta(y|x)}{\pi_{\text{ref}}(y|x)}.
+$$
+Then the reward part of the loss can be incorporated using the PPO clipping mechanism:
+$$
+L_{\text{reward}}(\theta) = \mathbb{E}_{x,y}\left[ \min\left( r_t(\theta)\, \hat{A}(x,y),\; \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\, \hat{A}(x,y) \right) \right].
+$$
+
+Putting these components together, the overall loss is:
+$$
+L(\theta) = -\left\{ \mathbb{E}_{x,y \sim \pi_{\theta_{\text{old}}}} \left[\min\left( r_t(\theta) \hat{A}(x,y),\; \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) \hat{A}(x,y) \right) \right] - \beta\, \mathbb{D}_{\text{KL}}\left[\pi_\theta(\cdot|x)\,\|\,\pi_{\text{ref}}(\cdot|x)\right] \right\}.
+$$
+A few notes on this formulation:
+- **Advantage Estimation:** $\hat{A}(x,y)$ can be computed using techniques like Generalized Advantage Estimation (GAE), comparing observed rewards to a baseline (often estimated by a value function).
+- **Clipping Mechanism:** The clipping term $\text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)$ restricts the update so that the new policy does not deviate too far from $\pi_{\text{ref}}$ in a single update.
+- **Adaptive Penalty:** In some implementations, the coefficient $\beta$ can be adapted during training to balance between optimizing the reward and maintaining proximity to the reference policy.
+- **Additional Terms:** In a full PPO implementation (especially in actor-critic setups), there may be additional terms such as a value function loss and an entropy bonus for exploration.
+
 ## Basic installation
 
 Basic installation can be done by running the following command: 
