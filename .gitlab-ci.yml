@@ -1,31 +1,53 @@
+include:
+  - project: 'lc-templates/id_tokens'
+    file: 'id_tokens.yml'
+
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH 
+
+variables:
+  CUSTOM_CI_BUILDS_DIR: "/usr/workspace/$USER"
+
 stages:
   - lint
 
-variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+default:
+  tags:
+    - slurm
+    - ruby
 
-before_script:
-  - python3 -m venv venv
-  - source venv/bin/activate
-  - pip install --upgrade pip
+.venv:
+  script:
+  - ml python/3.10.8
+  - which python
+  - python -m venv ${CI_JOB_ID}
+  - source ${CI_JOB_ID}/bin/activate
+  - python --version
+  - pip install --upgrade pip setuptools
+
+.clean_venv:
+  script:
+    - source deactivate
+    - rm -rf ${CI_JOB_ID}
 
 black:
   stage: lint
   script:
-    - source venv/bin/activate
+    - !reference [ .venv, script ]
     - pip install black==22.8.0
     - black --diff -S -t py39 protein_tune_rl
     - black --check -S -t py39 protein_tune_rl
   after_script:
-    - deactivate
-    - rm -rf venv
+    - !reference [ .clean_venv, script ]
 
 flake8:
   stage: lint
   script:
-    - source venv/bin/activate
+    - !reference [ .venv, script ]
     - pip install flake8==5.0.4
     - flake8 --ignore E501,E203,W503 protein_tune_rl
   after_script:
-    - deactivate
-    - rm -rf venv
+    - !reference [ .clean_venv, script ]
