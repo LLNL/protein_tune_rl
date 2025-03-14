@@ -10,7 +10,6 @@
 
 ![Status](https://img.shields.io/badge/Status-Active-green.svg)
 ![Python](https://img.shields.io/badge/Python-3.9-blue.svg)
-![CI](https://github.com/LLNL/protlib-designer/actions/workflows/ci.yml/badge.svg)
 
 ## Introduction
 
@@ -78,7 +77,6 @@ flake8 --ignore=E501,E203,W503 protein_tune_rl
 isort protein_tune_rl # isort will automatically sort imports in the correct order
 ```
 
-
 ## Installation on Lassen
 
 <details>
@@ -120,4 +118,3 @@ lrun -T4 -N2 python tune.py -cf configs/ft_iglm_folding.json
 ```
 
 </details>
-
