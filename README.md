@@ -18,51 +18,41 @@ Welcome to the `ProteinTuneRL` repository! ProteinTuneRL is an innovative framew
 
 ## Theoretical Background
 
-The main objective of this project is :
+ProteinTuneRL allows users to fine-tune a generative model $\pi_{\theta}(y|x)$ to generate protein sequences with desired properties. This is achieved by maximizing the following objective:
 
 $$
 \max_{\pi_{\theta}} \left(
 \underbrace{\mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi_{\theta}(y|x)} \left[ r(x, y) \right]}_{\substack{\text{generate sequences} \\ \text{with favorable properties}}} - \beta\, \underbrace{\mathbb{D}_{\text{KL}} \left[ \pi_{\theta}(y|x) \,\|\, \pi_{\text{ref}}(y|x) \right]}_{\substack{\text{maintain the likelihood} \\ \text{of the original model}}}
 \right)
 $$
+wehre $r(x, y)$ is the reward function that evaluates the quality of the generated sequence $y$ given the input $x$, $\mathcal{D}$ is the dataset of input sequences $x$, and $\pi_{\text{ref}}$ is a reference model that the fine-tuned model $\pi_{\theta}$ should not deviate too far from.
 
-Recall that the definition of the KL divergence is:
-$$
-\mathbb{D}_{\text{KL}} \left[ \pi_{\theta}(y|x) \,\|\, \pi_{\text{ref}}(y|x) \right] = \mathbb{E}_{y \sim \pi_{\theta}(y|x)} \left[ \log \frac{\pi_{\theta}(y|x)}{\pi_{\text{ref}}(y|x)} \right].
-$$
+### Online Learning
 
-Therefore, the objective can be rewritten as:
+In the online learning setting, the dataset $\mathcal{D}$ is not fixed, and the model $\pi_{\theta}$ is updated in an iterative manner. The objective can be rewritten as:
+
 $$
 \max_{\pi_{\theta}} \left(
-\mathbb{E}_{x,y} \left[ 
+\mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi_{\theta}(y|x)} \left[ 
 r(x, y) - \beta\, \log \frac{\pi_{\theta}(y|x)}{\pi_{\text{ref}}(y|x)}
 \right]
 \right).
 $$
 
-where:
+We provide two algorithms, `reinforce` and `ppo`, to optimize the above objective. The `reinforce` algorithm is a simple policy gradient method, while the `ppo` algorithm is a more advanced method that uses a clipped surrogate objective to stabilize the training process.
 
+### Offline Learning
 
-### PPO Loss
+For many protein design tasks, the dataset $\mathcal{D} = \{ x_i, y_i, r_i \}_{i=1}^N$ is fixed and can be used to pre-train the model $\pi_{\theta}$. For example, experimental data can be used to train a model that generates sequences with high stability. We provide `dro`, an implementation of the [Offline Regularised Reinforcement Learning for Large Language Models Alignment](https://arxiv.org/abs/2405.19107) algorithm to optimize the following derivation of the above objective:
 
-In our case, $\pi_{\text{ref}}$ acts as a fixed baseline (or pre-trained model). We can define the ratio:
 $$
-r_t(\theta) = \frac{\pi_\theta(y|x)}{\pi_{\text{ref}}(y|x)}.
-$$
-Then the reward part of the loss can be incorporated using the PPO clipping mechanism:
-$$
-L_{\text{reward}}(\theta) = \mathbb{E}_{x,y}\left[ \min\left( r_t(\theta)\, \hat{A}(x,y),\; \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\, \hat{A}(x,y) \right) \right].
+\mathcal{L}_{\text{DRO}} = \frac{1}{2} \mathbb{E}_{ \{x,y,r \} \sim \mathcal{D} }
+\left[
+  \left( r - V_{\varphi}(x) - \beta \log \frac{\pi_{\theta}(y|x)}{\pi_{\text{ref}}(y|x)} \right)^2 
+\right]
 $$
 
-Putting these components together, the overall loss is:
-$$
-L(\theta) = -\left\{ \mathbb{E}_{x,y \sim \pi_{\theta_{\text{old}}}} \left[\min\left( r_t(\theta) \hat{A}(x,y),\; \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) \hat{A}(x,y) \right) \right] - \beta\, \mathbb{D}_{\text{KL}}\left[\pi_\theta(\cdot|x)\,\|\,\pi_{\text{ref}}(\cdot|x)\right] \right\}.
-$$
-A few notes on this formulation:
-- **Advantage Estimation:** $\hat{A}(x,y)$ can be computed using techniques like Generalized Advantage Estimation (GAE), comparing observed rewards to a baseline (often estimated by a value function).
-- **Clipping Mechanism:** The clipping term $\text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)$ restricts the update so that the new policy does not deviate too far from $\pi_{\text{ref}}$ in a single update.
-- **Adaptive Penalty:** In some implementations, the coefficient $\beta$ can be adapted during training to balance between optimizing the reward and maintaining proximity to the reference policy.
-- **Additional Terms:** In a full PPO implementation (especially in actor-critic setups), there may be additional terms such as a value function loss and an entropy bonus for exploration.
+where $V(x)$ is a value function that estimates the quality of the input $x$.
 
 ## Basic installation
 
@@ -74,6 +64,9 @@ pip install -e '.'
 ```
 
 ## Installation on Lassen
+
+<details>
+<summary>Click to expand</summary>
 
 - Follow the steps in [Nikoli Dryden's note](https://lc.llnl.gov/confluence/display/~dryden1/PyTorch+2.5+from+source+on+Lassen), up to the section `Set up your environment for future use`. Adjust the paths/environment names as needed. Remark: if you would like to use the `openmm` refine feature in `IgFold`, choose python 3.9 instead of python 3.11 when setting up the conda environment.
 - Suppose the conda environment created in the previous step is named `ProteinTuneRL`, activate the environment:
@@ -93,7 +86,12 @@ or if folding signal is needed:
 pip install -e '.'[folding]
 ```
 
-## Running on Lassen
+</details>
+
+### Running on Lassen
+
+<details>
+<summary>Click to expand</summary>
 
 - On a single node (4 GPUs by default):
 ```bash
@@ -104,6 +102,8 @@ python tune.py -cf config/ft_iglm_folding.json
 export MASTER_ADDR=$(jsrun --nrs 1 -r 1 hostname)
 lrun -T4 -N2 python tune.py -cf configs/ft_iglm_folding.json
 ```
+
+</details>
 
 ### For development
 
