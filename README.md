@@ -64,6 +64,9 @@ pip install -e '.'
 
 ## Installation on Lassen
 
+<details>
+<summary>Click to expand</summary>
+
 - Follow the steps in [Nikoli Dryden's note](https://lc.llnl.gov/confluence/display/~dryden1/PyTorch+2.5+from+source+on+Lassen), up to the section `Set up your environment for future use`. Adjust the paths/environment names as needed. Remark: if you would like to use the `openmm` refine feature in `IgFold`, choose python 3.9 instead of python 3.11 when setting up the conda environment.
 - Suppose the conda environment created in the previous step is named `ProteinTuneRL`, activate the environment:
 ```bash
@@ -82,7 +85,12 @@ or if folding signal is needed:
 pip install -e '.'[folding]
 ```
 
-## Running on Lassen
+</details>
+
+### Running on Lassen
+
+<details>
+<summary>Click to expand</summary>
 
 - On a single node (4 GPUs by default):
 ```bash
@@ -93,6 +101,8 @@ python tune.py -cf config/ft_iglm_folding.json
 export MASTER_ADDR=$(jsrun --nrs 1 -r 1 hostname)
 lrun -T4 -N2 python tune.py -cf configs/ft_iglm_folding.json
 ```
+
+</details>
 
 ### For development
 
