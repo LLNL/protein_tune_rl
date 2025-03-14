@@ -1,0 +1,31 @@
+stages:
+  - lint
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+before_script:
+  - python3 -m venv venv
+  - source venv/bin/activate
+  - pip install --upgrade pip
+
+black:
+  stage: lint
+  script:
+    - source venv/bin/activate
+    - pip install black==22.8.0
+    - black --diff -S -t py39 protein_tune_rl
+    - black --check -S -t py39 protein_tune_rl
+  after_script:
+    - deactivate
+    - rm -rf venv
+
+flake8:
+  stage: lint
+  script:
+    - source venv/bin/activate
+    - pip install flake8==5.0.4
+    - flake8 --ignore E501,E203,W503 protein_tune_rl
+  after_script:
+    - deactivate
+    - rm -rf venv
