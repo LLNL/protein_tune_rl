@@ -4,3 +4,4 @@
 *.vscode
 *.pdb
 *.fasta
+protein_tune_rl/_version.py
