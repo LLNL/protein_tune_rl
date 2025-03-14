@@ -30,7 +30,6 @@ default:
 
 .clean_venv:
   script:
-    - deactivate
     - rm -rf ${CI_JOB_ID}
 
 black:
