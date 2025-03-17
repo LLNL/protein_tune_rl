@@ -24,7 +24,7 @@ $$
 \underbrace{\mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi_{\theta}(y|x)} \left[ r(x, y) \right]}_{\substack{\text{generate sequences} \\ \text{with favorable properties}}} - \beta\, \underbrace{\mathbb{D}_{\text{KL}} \left[ \pi_{\theta}(y|x) \,\|\, \pi_{\text{ref}}(y|x) \right]}_{\substack{\text{maintain the likelihood} \\ \text{of the original model}}}
 \right)
 $$
-wehre $r(x, y)$ is the reward function that evaluates the quality of the generated sequence $y$ given the input $x$, $\mathcal{D}$ is the dataset of input sequences $x$, and $\pi_{\text{ref}}$ is a reference model that the fine-tuned model $\pi_{\theta}$ should not deviate too far from.
+where $r(x, y)$ is the reward function that evaluates the quality of the generated sequence $y$ given the input $x$, $\mathcal{D}$ is the dataset of input sequences $x$, and $\pi_{\text{ref}}$ is a reference model that the fine-tuned model $\pi_{\theta}$ should not deviate too far from.
 
 ### Online Learning
 
