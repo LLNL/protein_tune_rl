@@ -15,7 +15,7 @@ class StateValue(nn.Module):
         super(StateValue, self).__init__()
         self.model_in = copy.deepcopy(model_in.module.model)
         self.linear_head_initialized = False
-        self.linear_head = nn.Linear(512, 1)
+        self.linear_head = nn.Linear(model_in.lm_head.in_features, 1)
         self.name = name
 
     def forward(
@@ -30,12 +30,11 @@ class StateValue(nn.Module):
             **kwargs,
         )
 
+        length = kwargs["attention_mask"].sum(1)
         last_hidden_state = model_out['hidden_states'][-1]
-        decoder_cls = last_hidden_state[:, :, :].mean(1)
-
-        output = self.linear_head(decoder_cls)
-
-        return torch.squeeze(output)
+        output = torch.squeeze(self.linear_head(last_hidden_state), 2)
+        output *= kwargs["attention_mask"]
+        return output.sum(1) / length
 
     def save(self, path) -> None:
         self.model.save_pretrained(path)
@@ -82,8 +81,7 @@ class PPO:
         surr1 = ratios * adv
         surr2 = torch.clamp(ratios, 1 - self.clip, 1 + self.clip) * adv
 
-        loss = -torch.min(surr1, surr2).mean()
-        return self._reduce_mean_across_processes(loss)
+        return -torch.min(surr1, surr2).mean()
 
     def step(self, reward, baseline, logp, entropy, sequences):
         init_size = sequences["init_size"]
@@ -100,12 +98,11 @@ class PPO:
             adv = reward - value.detach()
 
         if self.normalize_adv:
-            # adv = (adv - adv.mean()) / (adv.std(correction=0) + 1e-10)
-            adv_mean = (
-                0.0
-                if self.baseline == "mean"
-                else self._compute_mean_across_processes(adv)
-            )
+            if self.baseline == "mean":
+                adv_mean = 0.0
+            else:
+                adv_mean = self._compute_mean_across_processes(adv)
+
             adv_var = torch.square(adv.norm(p=2)) / len(adv) - adv_mean**2
             adv_var = self._reduce_mean_across_processes(adv_var)
             adv_std = torch.sqrt(adv_var)
@@ -117,7 +114,7 @@ class PPO:
 
         for start in range(0, len(logp), self.minibatch_size):
             self.policy_optimizer.zero_grad()
-            if self.baseline == "value_function":
+            if self.baseline == "state_value":
                 self.value_optimizer.zero_grad()
 
             end = start + self.minibatch_size
@@ -129,7 +126,7 @@ class PPO:
             policy_loss.backward(retain_graph=True)
             self.policy_optimizer.step()
 
-            if self.baseline == "value_function":
+            if self.baseline == "state_value":
                 value = self.state_value(**mini_state)
                 value_loss = nn.MSELoss()(value, reward[start:end])
                 value_loss.backward()

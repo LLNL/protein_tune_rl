@@ -83,7 +83,7 @@ class ProteinTuneRL:
 
         logger.info("Initialized ProtTuneRL")
 
-    def tune(self, n_run):
+    def tune(self):
         logger.info("Starting ProtTuneRL")
         self.protein_tuner.run(self.exp_output_dir)
         logger.info("Finished ProtTuneRL")
@@ -115,7 +115,7 @@ def experiment(rank, config_file, runs, mode, num_procs):
         logger.info(f"Run {run}")
         torch.manual_seed(run)
         np.random.seed(run)
-        ProteinTuneRL(config_file, mode).tune(run)
+        ProteinTuneRL(config_file, mode).tune()
 
     logger.info("Completed experiment")
 
