@@ -24,6 +24,7 @@ class Decoder(nn.Module):
             output_hidden_states=True,
             return_dict=True,
             attention_mask=attention_mask,
+            **kwargs,
         )
 
     def save(self, path) -> None:
