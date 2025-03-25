@@ -31,14 +31,14 @@ class DRO:
         # Call LLM (Pi theta) and get model logits for batch prompts
         # Tensor shape (batch_size, sequence_length)
         pi_logits = self.policy(
-            batch['input_ids'].to(self.device), attention_mask
+            batch['input_ids'].to(self.device), attention_mask=attention_mask
         ).logits
 
         # Call LLM (Pi ref) and get model logits with no gradients for batch prompts
         # Tensor shape (batch_size, sequence_length)
         with torch.no_grad():
             ref_logits = self.reference(
-                batch['input_ids'].to(self.device), attention_mask
+                batch['input_ids'].to(self.device), attention_mask=attention_mask
             ).logits
 
         # Tensor shape (batch_size, sequence_length-1)

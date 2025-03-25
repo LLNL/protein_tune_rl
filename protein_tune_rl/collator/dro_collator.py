@@ -76,7 +76,7 @@ class DROCollator:
             )
 
             if eval:
-                prompt = '[HEAVY]' + " " + "[HUMAN]" + " " + masked_prompt
+                prompt = '[HEAVY]' + " " + "[HUMAN]" + " " + masked_prompt + " " + "[SEP]"
 
             masked_prompts_with_completions.append(prompt)
             masked_prompts.append(
