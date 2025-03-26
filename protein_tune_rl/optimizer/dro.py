@@ -50,24 +50,23 @@ class DRO:
     def calculate_loss(self, batch):
         # Tensor shape (batch_size, sequence_length)
         labels = batch['labels'].clone().to(self.device)
-        # Tensor shape (batch_size, sequence_length-1)
+        # Create attention mask so only completion tokens are attended to
+        # Tensor shape (batch_size, sequence_length)
+        policy_attention_mask = torch.ones(labels.shape).to(self.device) * (labels != 0)
+        # Remove first token -> Tensor shape (batch_size, sequence_length-1)
         labels = labels[:, 1:].clone()
 
         # Tensor shape (batch_size, sequence_length-1)
         # Create loss mask where all values are zero except indices of completion tokens
         # Loss mask is used to compute loss only over completion tokens
         loss_mask = (labels != -100) & (labels != 0)
-
-        # Create attention mask so only completion tokens are attended to
-        # Tensor shape (batch_size, sequence_length-1)
-        attention_mask = torch.ones(labels.shape).to(self.device) * (labels != 0)
         labels[labels == -100] = 0
 
         # Tensor shape (batch_size, 1)
         rewards = batch['rewards'].to(self.device).unsqueeze(1).float().flatten()
 
         # Tensor shape (batch_size, sequence_length-1, vocab_size)
-        pi_logits, ref_logits = self.generate_logits(batch, attention_mask)
+        pi_logits, ref_logits = self.generate_logits(batch, policy_attention_mask)
 
         # Check shapes and handle error
         if pi_logits.shape[:-1] != labels.shape:
@@ -86,7 +85,8 @@ class DRO:
 
         # Tensor shape (batch_size, 1)
         # Call V pi for given prompts
-        value = self.value(batch['prompts'].to(self.device)).float().flatten()
+        value_attention_mask = torch.ones(batch['prompts'].shape) * (batch['prompts'] != 0)
+        value = self.value(batch['prompts'].to(self.device), attention_mask=value_attention_mask.to(self.device)).float().flatten()
 
         # Detach from graph to remove gradient calculation for loss functions
         value_no_grad = value.clone().detach()

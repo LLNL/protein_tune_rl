@@ -56,7 +56,7 @@ class DecoderWithLinearHead(nn.Module):
         self.linear_relu_stack = nn.Sequential(*linear_relu_stack)
 
     def forward(
-        self, input_ids, token_type_ids=None, labels=None, **kwargs
+        self, input_ids, token_type_ids=None, labels=None, attention_mask=None, **kwargs
     ) -> CausalLMOutput:
 
         if not self.train_all_params:
@@ -66,6 +66,7 @@ class DecoderWithLinearHead(nn.Module):
                     labels=labels,
                     output_hidden_states=True,
                     return_dict=True,
+                    attention_mask=attention_mask
                 )
         else:
             output = self.model(
@@ -73,9 +74,13 @@ class DecoderWithLinearHead(nn.Module):
                 labels=labels,
                 output_hidden_states=True,
                 return_dict=True,
+                attention_mask=attention_mask
             )
 
+        # Tensor shape (batch_size, sequence_length, hidden_dimension_size)
         last_hidden_state = output['hidden_states'][-1]
+        # Tensor shape (batch_size, hidden_dimension_size)
         decoder_cls = last_hidden_state[:, :, :].mean(1)
+        
 
         return self.linear_relu_stack(decoder_cls).float()
