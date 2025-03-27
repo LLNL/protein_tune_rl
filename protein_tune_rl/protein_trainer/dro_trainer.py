@@ -115,10 +115,6 @@ class DROTrainer(Trainer):
                 value_loss.backward()
                 policy_loss.backward()
 
-                # clip gradient for both policy and vaue models to prevent NaN
-                torch.nn.utils.clip_grad_norm_(self.policy.parameters(), max_norm=1)
-                torch.nn.utils.clip_grad_norm_(self.value.parameters(), max_norm=1)
-
                 self.policy_optimizer.step()
                 self.value_optimizer.step()
 
