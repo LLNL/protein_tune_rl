@@ -19,5 +19,7 @@ class ProGen2Scoring(LanguageModelScoring):
         return AutoModelForCausalLM.from_pretrained(model, trust_remote_code=True)
 
     def preprocessing(self, sequences):
+        for i, seq in enumerate(sequences):
+            sequences[i] = f"1{seq}2"
         encoding: Encoding = self.tokenizer.encode_batch(sequences)
         return torch.tensor([e.ids for e in encoding])
