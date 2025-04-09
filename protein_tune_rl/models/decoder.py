@@ -15,7 +15,7 @@ class Decoder(nn.Module):
         self.name = name
 
     def forward(
-        self, input_ids, token_type_ids=None, labels=None, attention_mask=None, **kwargs
+        self, input_ids, labels=None, attention_mask=None, **kwargs
     ) -> CausalLMOutput:
 
         return self.model(
@@ -56,7 +56,7 @@ class DecoderWithLinearHead(nn.Module):
         self.linear_relu_stack = nn.Sequential(*linear_relu_stack)
 
     def forward(
-        self, input_ids, token_type_ids=None, labels=None, attention_mask=None, **kwargs
+        self, input_ids, labels=None, attention_mask=None, **kwargs
     ) -> CausalLMOutput:
 
         if not self.train_all_params:

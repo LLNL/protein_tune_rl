@@ -38,7 +38,8 @@
     "policy_model" : 
     {
         "name" : "iglm",
-        "dir" : "/usr/workspace/vaccines/abag_seq/weights/trained/iglm"
+        "dir" : "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
+        "attn_implementation" : "eager"
             
             
     },
@@ -47,6 +48,7 @@
     {
         "name" : "iglm_w_linear_head",
         "dir" : "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
+        "attn_implementation" : "eager",
         "train_all_params" : true
         
         

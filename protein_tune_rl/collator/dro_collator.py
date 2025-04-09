@@ -80,7 +80,7 @@ class DROCollator:
 
             masked_prompts_with_completions.append(prompt)
             masked_prompts.append(
-                "[HEAVY]" + " " + "[HUMAN]" + " " + masked_prompt + " "
+                "[HEAVY]" + " " + "[HUMAN]" + " " + masked_prompt + " " + "[SEP]"
             )
 
         (
