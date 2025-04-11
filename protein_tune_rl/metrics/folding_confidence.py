@@ -5,11 +5,13 @@ from protein_tune_rl.metrics.structure import StructureBasedMetric
 
 
 class FoldingConfidence(StructureBasedMetric):
-    def __init__(self, folding_tool: str = "igfold", options={}):
+    def __init__(self, folding_tool: str = "igfold", options=None):
+        if options is None:
+            options = {}
         super().__init__(folding_tool, options)
 
     def __call__(self, chains: Dict):
-        name = "fold" + str(self.count)
+        name = f"fold{str(self.count)}"
         output_pdb_file, out = self._fold(chains, name)
 
         os.remove(output_pdb_file)
