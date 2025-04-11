@@ -136,13 +136,13 @@ class DROTrainer(Trainer):
                 log_df.to_csv(f"{output_dir}/dro_log.csv")
 
                 if (current_step % self.check_point_freq == 0) and (current_step > 0):
-                    # save policy network
+                    # save policy network to disk
                     torch.save(
                         self.policy.state_dict(),
                         f"{output_dir}/policy_model_{current_step}.bin",
                     )
 
-                    # save value network
+                    # save value network to disk
                     torch.save(
                         self.value.state_dict(),
                         f"{output_dir}/value_model_{current_step}.bin",
