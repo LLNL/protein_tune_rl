@@ -1,0 +1,52 @@
+include:
+  - project: 'lc-templates/id_tokens'
+    file: 'id_tokens.yml'
+
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH 
+
+variables:
+  CUSTOM_CI_BUILDS_DIR: "/usr/workspace/$USER"
+
+stages:
+  - lint
+
+default:
+  tags:
+    - slurm
+    - ruby
+
+.venv:
+  script:
+  - ml python/3.10.8
+  - which python
+  - python -m venv ${CI_JOB_ID}
+  - source ${CI_JOB_ID}/bin/activate
+  - python --version
+  - pip install --upgrade pip setuptools
+
+.clean_venv:
+  script:
+    - rm -rf ${CI_JOB_ID}
+
+black:
+  stage: lint
+  script:
+    - !reference [ .venv, script ]
+    - pip install black==22.8.0
+    - black --diff -S -t py39 protein_tune_rl
+    - black --check -S -t py39 protein_tune_rl
+  after_script:
+    - !reference [ .clean_venv, script ]
+
+flake8:
+  stage: lint
+  script:
+    - !reference [ .venv, script ]
+    - pip install flake8==5.0.4
+    - flake8 --ignore E501,E203,W503 protein_tune_rl
+  after_script:
+    - !reference [ .clean_venv, script ]

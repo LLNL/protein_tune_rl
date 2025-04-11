@@ -1,12 +1,8 @@
-import warnings
-
 from protein_tune_rl.dataloader import create_dataloader
 from protein_tune_rl.dataset import create_dataset
 from protein_tune_rl.models import create_model
 from protein_tune_rl.protein_trainer.trainer import Trainer
 from protein_tune_rl.tokenizer import create_tokenizer
-
-warnings.filterwarnings("ignore")
 
 
 class TestTrainer(Trainer):

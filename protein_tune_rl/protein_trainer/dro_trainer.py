@@ -1,7 +1,6 @@
-import warnings
-
 import pandas as pd
 import torch
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 from protein_tune_rl import logger
 from protein_tune_rl.collator import create_collator
@@ -13,14 +12,17 @@ from protein_tune_rl.protein_trainer import create_optimizer
 from protein_tune_rl.protein_trainer.trainer import Trainer
 from protein_tune_rl.tokenizer import create_tokenizer
 
-warnings.filterwarnings("ignore")
-
 
 class DROTrainer(Trainer):
     def __init__(self, config):
         self.config = config
         # Catch with device is available.
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if torch.cuda.is_available():
+            self.device_ids = [torch.cuda.current_device()]
+            self.device = torch.device("cuda", self.device_ids[0])
+        else:
+            self.device_ids = None
+            self.device = torch.device("cpu")
 
         self.total_optimization_steps = self.config["trainer"][
             "total_optimization_steps"
@@ -58,12 +60,14 @@ class DROTrainer(Trainer):
             hf_config=self.config['policy_model']['dir'],
             vocab_size=self.tokenizer.vocab_size,
         ).to(self.device)
+        self.policy = DDP(self.policy, device_ids=self.device_ids)
 
         self.reference = create_model(
             name="iglm",
             hf_config=self.config['policy_model']['dir'],
             vocab_size=self.tokenizer.vocab_size,
         ).to(self.device)
+        self.reference = DDP(self.reference, device_ids=self.device_ids)
 
         self.value = create_model(
             name="iglm_w_linear_head",
@@ -71,6 +75,7 @@ class DROTrainer(Trainer):
             vocab_size=self.tokenizer.vocab_size,
             train_all_params=self.train_all_value_params,
         ).to(self.device)
+        self.value = DDP(self.value, device_ids=self.device_ids)
 
         self.reference.eval()
 

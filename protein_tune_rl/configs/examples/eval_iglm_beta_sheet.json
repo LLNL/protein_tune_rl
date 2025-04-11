@@ -1,0 +1,52 @@
+
+{
+    "evaluator":
+    {
+        "name": "online_rl_evaluator",
+        "batch_size": 8,
+        "max_length": 22,
+        "use_cuda": true
+    },
+
+    "experiment_directory": "test_run",
+
+    "dataset":
+    {
+        "name": "infilling",
+        "data_directory": "../data/nos_data/eval_data.csv"
+    },
+
+    "tokenizer":
+    {
+        "tokenizer_config": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
+        "padding_side": "left"
+    },
+
+    "collator": 
+    {
+        "mask_region": "HCDR3"
+    },
+
+    "policy_model":
+    {
+        "name": "iglm",
+        "path": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm"
+    },
+
+    "metric":
+    [
+        {
+            "name": "ss_perc_sheet",
+            "params": { }
+        },
+        {
+            "name": "prot_gpt2_scoring",
+            "params": { }
+        },
+        {
+            "name": "progen2_scoring",
+            "params": { }
+        }
+    ]
+
+}

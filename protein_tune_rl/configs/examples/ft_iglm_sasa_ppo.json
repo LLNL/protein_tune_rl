@@ -1,0 +1,71 @@
+
+{
+    "trainer":
+    {
+        "name": "online_rl_trainer",
+        "batch_size": 8,
+        "max_length": 22,
+        "use_cuda": true,
+        "check_point_freq": 10,
+        "total_optimization_steps": 50
+    },
+
+    "experiment_directory": "test_run",
+
+    "dataset":
+    {
+        "name": "infilling",
+        "data_directory": "../data/nos_data/training_data.csv"
+    },
+
+    "tokenizer":
+    {
+        "tokenizer_config": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
+        "padding_side": "left"
+    },
+
+    "collator": 
+    {
+        "mask_region": "HCDR3"
+    },
+
+    "policy_model":
+    {
+        "name": "iglm",
+        "path": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm"
+    },
+
+    "KL_penalty":
+    {
+        "weight": 1e-4,
+        "target": null
+    },
+
+    "metric":
+    [
+        {
+            "name": "sasa",
+            "params":
+            {
+                "folding_tool": "igfold",
+                "options":
+                {
+                    "num_models": 1,
+                    "do_refine": false,
+                    "use_openmm": true,
+                    "do_renum": false
+                }
+            }
+        }
+    ],
+
+    "optimizer":
+    {
+        "name": "ppo",
+        "learning_rate": 1e-5,
+        "entropy_weight": 0e-3,
+        "normalize_advantage": false,
+        "baseline": "mean",
+        "minibatch_size": 2
+    }
+}

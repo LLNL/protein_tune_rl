@@ -2,16 +2,20 @@ import torch
 import transformers
 
 
-class IgLMTokenizer:
-    def __init__(self, hf_config, padding_side="right"):
+class AATokenizer:
+    def __init__(self, hf_config):
 
+        # print("HF Config", hf_config)
+        # os.path.join(trained_models_dir, 'vocab.txt')
+        # self.tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained(hf_config + "/")
         self.tokenizer = transformers.BertTokenizerFast(
-            vocab_file=f"{hf_config}/vocab.txt",
-            do_lower_case=False,
-            padding_side=padding_side,
+            vocab_file=hf_config + "/vocab.txt", do_lower_case=False
         )
-        self.tokenizer.add_special_tokens(IgLMTokenizer.conditional_tokens())
+        self.tokenizer.add_special_tokens(AATokenizer.conditional_tokens())
         self.vocab_size = len(self.tokenizer)
+
+        # print(f"Number of tokens; {self.vocab_size}")
+        # print(self.tokenizer)
 
     @property
     def mask_token_id(self):
@@ -42,6 +46,6 @@ class IgLMTokenizer:
 
     def __call__(self, sequence):
         encoding = self.tokenizer(sequence)
-        # remove start [CLS] and end [SEP] added by the BERT tokenizer
-        # IgLM is not trained with these tokens
-        return torch.tensor(encoding["input_ids"][1:-1], dtype=torch.long)
+        input_ids = torch.tensor(encoding["input_ids"], dtype=torch.long)
+
+        return input_ids
