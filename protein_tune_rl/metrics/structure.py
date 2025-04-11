@@ -9,7 +9,9 @@ from protein_tune_rl.util.util import HidePrints, check_pdb
 
 
 class StructureBasedMetric:
-    def __init__(self, folding_tool: str, options: Dict = {}):
+    def __init__(self, folding_tool: str, options: Dict = None):
+        if options is None:
+            options = {}
         assert folding_tool.lower() == "igfold", "Currently only IgFold is supported!"
         self.options = options
 
