@@ -39,7 +39,12 @@ class OnlineRLEvaluator(Evaluator, OnlineRLSampler):
             for name, metric in self.metrics.items():
                 score = torch.zeros(len(sampled_seqs))
                 for i, seq in enumerate(sampled_seqs):
-                    chains = {"L": init_seqs["LC"][i], "H": seq}
+                    chains = {
+                        "L": init_seqs["LC"][i],
+                        "H": seq,
+                        "seq_pre_mask": init_seqs["seq_pre_mask"][i],
+                        "seq_post_mask": init_seqs["seq_post_mask"][i],
+                    }
                     score[i] = metric(chains)
                 scores[name].extend(self._gather(score))
 
