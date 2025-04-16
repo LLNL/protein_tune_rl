@@ -1,14 +1,22 @@
 from transformers import AutoModelForCausalLM, GPT2Config, GPT2LMHeadModel
 
 
-def create_model(name, hf_config=None, vocab_size=None, train_all_params=False):
+def create_model(
+    name,
+    hf_config=None,
+    vocab_size=None,
+    train_all_params=False,
+    attn_implementation="eager",
+):
 
     if name.lower() == "gpt2":
         return _create_gpt2_model(vocab_size, name)
     if name.lower() == "iglm":
         from protein_tune_rl.models.decoder import Decoder
 
-        model = AutoModelForCausalLM.from_pretrained(hf_config)
+        model = AutoModelForCausalLM.from_pretrained(
+            hf_config, attn_implementation=attn_implementation
+        )
         model.resize_token_embeddings(vocab_size)
 
         return Decoder(model, name)
@@ -16,7 +24,9 @@ def create_model(name, hf_config=None, vocab_size=None, train_all_params=False):
     if name.lower() == "iglm_w_linear_head":
         from protein_tune_rl.models.decoder import DecoderWithLinearHead
 
-        model = AutoModelForCausalLM.from_pretrained(hf_config)
+        model = AutoModelForCausalLM.from_pretrained(
+            hf_config, attn_implementation=attn_implementation
+        )
         model.resize_token_embeddings(vocab_size)
 
         return DecoderWithLinearHead(model, name, train_all_params)

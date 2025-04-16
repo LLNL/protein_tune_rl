@@ -21,7 +21,7 @@
             "data_directory" : "../data/nos_data/training_data.csv",
             "chain" : "HC",
             "region" : "HCDR3",   
-            "reward" : "norm_sasa"   
+            "reward" : "norm_ss_perc_sheet"   
         },
     
     "tokenizer" : 
