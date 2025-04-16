@@ -71,6 +71,7 @@ class IgLMScoring(LanguageModelScoring):
         chain_token,
         species_token,
         infill_range=None,
+        reduction="mean",
     ):
         """
         Calculate the log-likelihood for a given sequence.
@@ -138,7 +139,7 @@ class IgLMScoring(LanguageModelScoring):
         nll = torch.nn.functional.cross_entropy(
             shift_logits.view(-1, shift_logits.size(-1)),
             shift_labels.view(-1),
-            reduction='mean',
+            reduction=reduction,
         )
 
         # Return the negative loss as the log-likelihood.
@@ -162,4 +163,5 @@ class IgLMScoring(LanguageModelScoring):
             chain_token,
             species_token,
             infill_range=infill_range,
+            reduction="mean",
         )
