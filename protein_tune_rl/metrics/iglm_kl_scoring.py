@@ -23,12 +23,12 @@ class IgLMKLScoring:
         """
         This function computes the folowing score:
         .. math::
-            score(y) = \sum_{l=1}^L log p_theta(y_l | x) - \sum_{l=1}^L log p_ref(y_l | x)
+            score(y) = sum_{l=1}^L log p_theta(y_l | x) - sum_{l=1}^L log p_ref(y_l | x)
 
         where :math:`p_theta` is the primary model and :math:`p_ref` is the reference model.
         Note that the score can be then used to compute an approximate KL divergence using:
         .. math::
-            KL(p_theta(x) || p_ref(x)) = \frac{1}{N} \sum_(i=1)^N score(y_i) with y_i ~ p_theta(x)
+            KL(p_theta(x) || p_ref(x)) = \frac{1}{N} sum_(i=1)^N score(y_i) with y_i ~ p_theta(x)
         """
 
         infill_range = (
