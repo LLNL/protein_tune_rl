@@ -16,5 +16,5 @@ def create_dataloader(dataset, batch_size, shuffle=True, collate_fn=None):
         batch_size=batch_size,
         collate_fn=collate_fn,
         sampler=sampler,
-        drop_last=True,
+        drop_last=False,
     )

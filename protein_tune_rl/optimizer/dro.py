@@ -23,7 +23,7 @@ class DRO:
         self.tokenizer = tokenizer
         self.device = device
         self.tau = tau
-        self.mean = mean 
+        self.mean = mean
         self.rescaling = rescaling
 
     def generate_logits(self, batch, attention_mask=None):
@@ -31,7 +31,7 @@ class DRO:
         # Call LLM (Pi theta) and get model logits for batch prompts
         # Tensor shape (batch_size, sequence_length)
         pi_logits = self.policy(
-            batch['input_ids'].to(self.device), attention_mask=attention_mask.float() 
+            batch['input_ids'].to(self.device), attention_mask=attention_mask.float()
         ).logits
 
         # Call LLM (Pi ref) and get model logits with no gradients for batch prompts
@@ -66,7 +66,9 @@ class DRO:
         rewards = batch['rewards'].to(self.device).unsqueeze(1).float().flatten()
 
         # Tensor shape (batch_size, sequence_length-1, vocab_size)
-        pi_logits, ref_logits = self.generate_logits(batch, attention_mask=policy_attention_mask)
+        pi_logits, ref_logits = self.generate_logits(
+            batch, attention_mask=policy_attention_mask
+        )
 
         # Check shapes and handle error
         if pi_logits.shape[:-1] != labels.shape:
@@ -85,8 +87,17 @@ class DRO:
 
         # Tensor shape (batch_size, 1)
         # Call V pi for given prompts
-        value_attention_mask = torch.ones(batch['prompts'].shape) * (batch['prompts'] != 0)
-        value = self.value(batch['prompts'].to(self.device), attention_mask=value_attention_mask.to(self.device)).float().flatten()
+        value_attention_mask = torch.ones(batch['prompts'].shape) * (
+            batch['prompts'] != 0
+        )
+        value = (
+            self.value(
+                batch['prompts'].to(self.device),
+                attention_mask=value_attention_mask.to(self.device),
+            )
+            .float()
+            .flatten()
+        )
 
         # Detach from graph to remove gradient calculation for loss functions
         value_no_grad = value.clone().detach()

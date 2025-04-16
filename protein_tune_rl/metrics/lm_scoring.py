@@ -67,4 +67,4 @@ class LanguageModelScoring:
         # BPE tokenizer requires the mean to normalize over different sequence lengths
         # create a dataframe from dictionary with mutation and scores
         value = label_logps_w_mask.sum(-1)  # / logp_mask.sum(-1)
-        return value
+        return value.item()

@@ -20,7 +20,7 @@
     "tokenizer" : 
     {
             "name" : "iglm_tokenizer",
-            "tokenizer_config" : "/usr/workspace/vaccines/abag_seq/weights/trained/optlm"
+            "tokenizer_config" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/policy"
     },
 
     "metric":
@@ -36,7 +36,7 @@
     "policy_model" : 
     {
         "name" : "iglm",
-        "dir" : "/usr/workspace/vaccines/abag_seq/weights/trained/optlm"
+        "dir" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/policy"
             
             
     }

@@ -1,5 +1,3 @@
-from typing import Dict
-
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
 
