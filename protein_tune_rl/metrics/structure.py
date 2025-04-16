@@ -47,7 +47,7 @@ class StructureBasedMetric:
                     out = self.igfold.fold(
                         output_pdb_file,  # Output PDB file
                         sequences=chains,  # Antibody sequences
-                        **self.options
+                        **self.options,
                         # do_refine=True, # Refine the antibody structure with PyRosetta
                         # use_openmm=False, # Use OpenMM for refinement
                         # do_renum=False, # Renumber predicted antibody structure (Chothia)
