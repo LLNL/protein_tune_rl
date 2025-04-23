@@ -1,4 +1,5 @@
-from optlm.protein_tune_rl.protein_tune_rl.tokenizer.iglm_tokenizer import AATokenizer
+from optlm.protein_tune_rl.protein_tune_rl.tokenizer.iglm_tokenizer import \
+    AATokenizer
 
 
 class MultiMaskTokenizer(AATokenizer):

@@ -1,5 +1,6 @@
-import pandas as pd
 import pickle
+
+import pandas as pd
 import torch
 import torch.distributed as dist
 
@@ -25,7 +26,6 @@ class IGLMEvaluator(Evaluator):
         self.temperature = self.config["generator"]["temperature"]
         self.max_length = self.config["generator"]["max_length"]
         self.bad_word_ids = self.config["generator"]["bad_word_ids"]
-
 
         self.dataset = create_dataset(
             name=self.config['dataset']['name'],
@@ -59,7 +59,15 @@ class IGLMEvaluator(Evaluator):
         for metric in self.config['metric']['name']:
             self.metric_function.append(create_metric(name=metric)())
 
-    def generate(self, starting_tokens, num_to_generate, top_p, temperature, max_length, bad_word_ids):
+    def generate(
+        self,
+        starting_tokens,
+        num_to_generate,
+        top_p,
+        temperature,
+        max_length,
+        bad_word_ids,
+    ):
 
         for __ in range(num_to_generate):
             seq = self.policy.model.generate(
@@ -104,7 +112,14 @@ class IGLMEvaluator(Evaluator):
             for idx, sequence in enumerate(
                 tokenized_batch['input_ids'].to(self.device)
             ):
-                sampled_sequence, sampled_tokens = self.generate(sequence, self.num_to_generate, self.top_p, self.temperature, self.max_length, self.bad_word_ids)
+                sampled_sequence, sampled_tokens = self.generate(
+                    sequence,
+                    self.num_to_generate,
+                    self.top_p,
+                    self.temperature,
+                    self.max_length,
+                    self.bad_word_ids,
+                )
                 chains = {"L": batch["LC"][idx], "H": sampled_sequence}
                 # score the sequence under some eval function (SASA)
                 try:
@@ -136,7 +151,6 @@ class IGLMEvaluator(Evaluator):
             final_df.to_csv(f"{output_dir}/{self.model_name}_eval.csv")
 
         return final_df
-    
 
     def gather_dataframes(self, local_df, group=None):
         """
@@ -156,21 +170,34 @@ class IGLMEvaluator(Evaluator):
 
         # Gather sizes first
         local_size = torch.tensor([tensor.numel()], device=self.device)
-        sizes = [torch.tensor([0], device=self.device) for _ in range(dist.get_world_size(group))]
+        sizes = [
+            torch.tensor([0], device=self.device)
+            for _ in range(dist.get_world_size(group))
+        ]
         dist.all_gather(sizes, local_size, group=group)
 
         # Pad tensor to max size
         max_size = max(s.item() for s in sizes)
-        padded = torch.cat([tensor, torch.zeros(max_size - tensor.numel(), dtype=torch.uint8, device=self.device)])
+        padded = torch.cat(
+            [
+                tensor,
+                torch.zeros(
+                    max_size - tensor.numel(), dtype=torch.uint8, device=self.device
+                ),
+            ]
+        )
 
         # Gather all padded tensors
-        gathered = [torch.empty(max_size, dtype=torch.uint8, device=self.device) for _ in range(dist.get_world_size(group))]
+        gathered = [
+            torch.empty(max_size, dtype=torch.uint8, device=self.device)
+            for _ in range(dist.get_world_size(group))
+        ]
         dist.all_gather(gathered, padded, group=group)
 
         if dist.get_rank(group) == 0:
             dfs = []
             for t, s in zip(gathered, sizes):
-                raw = bytes(t[:s.item()].tolist())
+                raw = bytes(t[: s.item()].tolist())
                 df = pickle.loads(raw)
                 dfs.append(df)
             return pd.concat(dfs, ignore_index=True)
