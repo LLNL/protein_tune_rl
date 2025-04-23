@@ -15,7 +15,6 @@ from protein_tune_rl.tokenizer import create_tokenizer
 
 class IGLMEvaluator(Evaluator):
     def __init__(self, config):
-        #assert dist.get_world_size() == 1
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.batch_size = self.config["evaluator"]["batch_size"]
