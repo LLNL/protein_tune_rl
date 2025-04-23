@@ -40,6 +40,11 @@ class ProteinTuneRL:
                     else:
                         lr = self.config['optimizer']['learning_rate']
 
+                    if 'tau' in self.config['trainer']:
+                        tau = self.config['trainer']['tau']
+                    else:
+                        tau = self.config['optimizer']['tau']
+
                     exp_output_dir = (
                         self.config['trainer']['name']
                         + f"/{reward}"
@@ -51,6 +56,8 @@ class ProteinTuneRL:
                         + str(self.config['trainer']['batch_size'])
                         + '_lr_'
                         + str(lr)
+                        + '_tau_'
+                        + str(tau)
                     )
 
                 self.protein_tuner = create_trainer(self.config['trainer']['name'])(

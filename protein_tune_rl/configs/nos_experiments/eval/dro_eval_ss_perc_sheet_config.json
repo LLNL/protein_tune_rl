@@ -10,7 +10,7 @@
     "dataset" :
         {
             "name" : "dro_eval",             
-            "data_directory" : "../data/nos_data/eval_data.csv",
+            "data_directory" : "../data/nos_data/eval_data_v3.csv",
             "chain" : "HC",
             "region" : "HCDR3"   
         },
@@ -39,9 +39,32 @@
         "dir" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/policy"
             
             
+    },
+
+    "generator" : 
+
+    {
+        "num_to_generate" : 1, 
+        "top_p" : 1,
+        "temperature" :  1,
+        "max_length" : 150,
+        "bad_word_ids" :  
+                            [[0],
+                            [1],
+                            [3],
+                            [4],
+                            [25],
+                            [26],   
+                            [27],
+                            [28],
+                            [29],
+                            [30],
+                            [31],
+                            [32]]
     }
 
    
     
      
 }
+

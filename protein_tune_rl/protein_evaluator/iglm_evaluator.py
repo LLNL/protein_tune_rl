@@ -1,4 +1,5 @@
 import pandas as pd
+import pickle
 import torch
 import torch.distributed as dist
 
@@ -12,13 +13,20 @@ from protein_tune_rl.protein_evaluator.evaluator import Evaluator
 from protein_tune_rl.tokenizer import create_tokenizer
 
 
-class DROEvaluator(Evaluator):
+class IGLMEvaluator(Evaluator):
     def __init__(self, config):
-        assert dist.get_world_size() == 1
+        #assert dist.get_world_size() == 1
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.batch_size = self.config["evaluator"]["batch_size"]
         self.model_name = self.config["evaluator"]["model_name"]
+
+        self.num_to_generate = self.config["generator"]["num_to_generate"]
+        self.top_p = self.config["generator"]["top_p"]
+        self.temperature = self.config["generator"]["temperature"]
+        self.max_length = self.config["generator"]["max_length"]
+        self.bad_word_ids = self.config["generator"]["bad_word_ids"]
+
 
         self.dataset = create_dataset(
             name=self.config['dataset']['name'],
@@ -52,31 +60,16 @@ class DROEvaluator(Evaluator):
         for metric in self.config['metric']['name']:
             self.metric_function.append(create_metric(name=metric)())
 
-    def generate(self, starting_tokens, num_to_generate=1, top_p=1, temperature=1):
-        # Set to remove duplicates
-        sampled_sequences = 0
+    def generate(self, starting_tokens, num_to_generate, top_p, temperature, max_length, bad_word_ids):
 
-        while sampled_sequences < num_to_generate:
+        for __ in range(num_to_generate):
             seq = self.policy.model.generate(
                 starting_tokens.unsqueeze(0),
-                max_length=150,
+                max_length=max_length,
                 pad_token_id=self.tokenizer.pad_token_id,
                 eos_token_id=2,
                 forced_eos_token_id=2,
-                bad_words_ids=[
-                    [0],
-                    [1],
-                    [3],
-                    [4],
-                    [25],
-                    [26],
-                    [27],
-                    [28],
-                    [29],
-                    [30],
-                    [31],
-                    [32],
-                ],
+                bad_words_ids=bad_word_ids,
                 do_sample=True,
                 top_p=top_p,
                 temperature=temperature,
@@ -84,6 +77,7 @@ class DROEvaluator(Evaluator):
 
             seq = seq[0]  # Squeeze out batch   dimension
 
+            # decode sequence ids for IgLM
             decoded_sequence = [
                 self.tokenizer.tokenizer.convert_ids_to_tokens([next_token][0])
                 for next_token in seq.tolist()
@@ -95,8 +89,6 @@ class DROEvaluator(Evaluator):
                 decoded_sequence[: decoded_sequence.index("[SEP]") - 1]
             )
             decoded_sequence = decoded_sequence.replace("[MASK]", infilled_sequence)
-
-            sampled_sequences += 1
 
         return decoded_sequence, infilled_sequence
 
@@ -113,7 +105,7 @@ class DROEvaluator(Evaluator):
             for idx, sequence in enumerate(
                 tokenized_batch['input_ids'].to(self.device)
             ):
-                sampled_sequence, sampled_tokens = self.generate(sequence)
+                sampled_sequence, sampled_tokens = self.generate(sequence, self.num_to_generate, self.top_p, self.temperature, self.max_length, self.bad_word_ids)
                 chains = {"L": batch["LC"][idx], "H": sampled_sequence}
                 # score the sequence under some eval function (SASA)
                 try:
@@ -125,7 +117,7 @@ class DROEvaluator(Evaluator):
                     score = None
 
                 logger.info(
-                    f"{batch_number}, seq {sampled_sequence}; infilled seq {sampled_tokens}; score {score}"
+                    f"rank {dist.get_rank()}; {batch_number}, seq {sampled_sequence}; infilled seq {sampled_tokens}; score {score}"
                 )
 
                 scores.append(score)
@@ -139,6 +131,49 @@ class DROEvaluator(Evaluator):
         for idx, metric in enumerate(self.config['metric']['name']):
             eval_df[str(metric)] = [metric_score[idx] for metric_score in scores]
 
-        eval_df.to_csv(f"{output_dir}/{self.model_name}_eval.csv")
+        final_df = self.gather_dataframes(eval_df)
 
-        return eval_df
+        if dist.get_rank() == 0:
+            final_df.to_csv(f"{output_dir}/{self.model_name}_eval.csv")
+
+        return final_df
+    
+
+    def gather_dataframes(self, local_df, group=None):
+        """
+        Gather pandas DataFrames from all processes and combine them on rank 0.
+
+        Args:
+            local_df (pd.DataFrame): Local DataFrame on each process.
+            group (optional): Torch distributed process group.
+
+        Returns:
+            pd.DataFrame on rank 0, None elsewhere.
+        """
+
+        # Serialize the DataFrame using pickle
+        serialized = pickle.dumps(local_df)
+        tensor = torch.ByteTensor(list(serialized)).to(self.device)
+
+        # Gather sizes first
+        local_size = torch.tensor([tensor.numel()], device=self.device)
+        sizes = [torch.tensor([0], device=self.device) for _ in range(dist.get_world_size(group))]
+        dist.all_gather(sizes, local_size, group=group)
+
+        # Pad tensor to max size
+        max_size = max(s.item() for s in sizes)
+        padded = torch.cat([tensor, torch.zeros(max_size - tensor.numel(), dtype=torch.uint8, device=self.device)])
+
+        # Gather all padded tensors
+        gathered = [torch.empty(max_size, dtype=torch.uint8, device=self.device) for _ in range(dist.get_world_size(group))]
+        dist.all_gather(gathered, padded, group=group)
+
+        if dist.get_rank(group) == 0:
+            dfs = []
+            for t, s in zip(gathered, sizes):
+                raw = bytes(t[:s.item()].tolist())
+                df = pickle.loads(raw)
+                dfs.append(df)
+            return pd.concat(dfs, ignore_index=True)
+
+        return None
