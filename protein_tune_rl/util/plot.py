@@ -15,9 +15,8 @@ def plot_pareto_frontier(Xs, Ys, color, maxX=True, maxY=True):
         if maxY:
             if pair[1] >= pareto_front[-1][1]:
                 pareto_front.append(pair)
-        else:
-            if pair[1] <= pareto_front[-1][1]:
-                pareto_front.append(pair)
+        elif pair[1] <= pareto_front[-1][1]:
+            pareto_front.append(pair)
 
     '''Plotting process'''
     plt.scatter(Xs, Ys, marker='.', color=color, alpha=0.5)
@@ -49,10 +48,7 @@ def plot_pareto_frontiers(
     )
     for obj in legend.legend_handles:
         obj.set_linewidth(2.0)
-    if likelihood == "prot_gpt2_scoring":
-        xlabel = "ProtGPT2"
-    else:
-        xlabel = "ProGen2"
+    xlabel = "ProtGPT2" if likelihood == "prot_gpt2_scoring" else "ProGen2"
     plt.xlabel(rf'{xlabel} Log Likelihood  $\rightarrow$', fontsize=15)
     plt.ylabel(rf'{feature}  $\rightarrow$', fontsize=15)
     plt.title(f'{len(ft_rewards)} samples', fontsize=15)

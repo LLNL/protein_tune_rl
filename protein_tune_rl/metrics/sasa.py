@@ -8,14 +8,16 @@ from protein_tune_rl.metrics.structure import StructureBasedMetric
 
 
 class SASA(StructureBasedMetric):
-    def __init__(self, folding_tool: str, options: Dict = {"do_renum": False}):
+    def __init__(self, folding_tool: str, options: Dict = None):
+        if options is None:
+            options = {"do_renum": False}
         super().__init__(folding_tool, options)
 
         self.parser = PDBParser(QUIET=1)
         self.sr = ShrakeRupley()
 
     def __call__(self, chains: Dict):
-        name = "fold" + str(self.count)
+        name = f"fold{str(self.count)}"
         output_pdb_file, _ = self._fold(chains, name)
 
         struct = self.parser.get_structure(name, output_pdb_file)
