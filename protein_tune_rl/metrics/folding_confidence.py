@@ -6,8 +6,6 @@ from protein_tune_rl.metrics.structure import StructureBasedMetric
 
 class FoldingConfidence(StructureBasedMetric):
     def __init__(self, folding_tool: str = "igfold", options=None):
-        if options is None:
-            options = {}
         super().__init__(folding_tool, options)
 
     def __call__(self, chains: Dict):
