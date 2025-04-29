@@ -56,8 +56,9 @@ class IGLMEvaluator(Evaluator):
         ).to(self.device)
 
         self.metric_function = []
-        for metric in self.config['metric']['name']:
-            self.metric_function.append(create_metric(name=metric)())
+        self.metric_function.extend(
+            create_metric(name=metric)() for metric in self.config['metric']['name']
+        )
 
     def generate(
         self,

@@ -1,4 +1,14 @@
 def create_metric(name):
+    """
+    Create a metric object based on the given name.
+    Args:
+        name (str): The name of the metric to create.
+    Returns:
+        object: An instance of the specified metric class.
+    Raises:
+        ValueError: If the metric name is not recognized.
+    """
+
     if name == "sasa":
         from protein_tune_rl.metrics.sasa import SASA
 
@@ -20,7 +30,17 @@ def create_metric(name):
 
         return ProGen2Scoring
 
+    if name == "iglm_scoring":
+        from protein_tune_rl.metrics.iglm_scoring import IgLMScoring
+
+        return IgLMScoring
+
     if name == "ss_perc_sheet":
         from protein_tune_rl.metrics.ss_perc_sheet import PercBetaSheet
 
         return PercBetaSheet
+
+    if name == "iglm_kl_scoring":
+        from protein_tune_rl.metrics.iglm_kl_scoring import IgLMKLScoring
+
+        return IgLMKLScoring
