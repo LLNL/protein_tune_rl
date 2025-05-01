@@ -55,9 +55,15 @@ class IGLMEvaluator(Evaluator):
             vocab_size=self.tokenizer.vocab_size,
         ).to(self.device)
 
+        for metric in self.config['metric']:
+            print(metric)
+            print(metric["name"])
+            print(metric["params"])
+            #print(self.config['metric']['name'][metric]["params"])
+
         self.metric_function = []
         self.metric_function.extend(
-            create_metric(name=metric)() for metric in self.config['metric']['name']
+            create_metric(name=metric["name"])(**metric["params"]) for metric in self.config['metric']
         )
 
     def generate(
@@ -70,8 +76,9 @@ class IGLMEvaluator(Evaluator):
         bad_word_ids,
     ):
 
+        decoded_sequences, decoded_infills = [], []
         for __ in range(num_to_generate):
-            seq = self.policy.model.generate(
+            tokens = self.policy.model.generate(
                 starting_tokens.unsqueeze(0),
                 max_length=max_length,
                 pad_token_id=self.tokenizer.pad_token_id,
@@ -83,22 +90,27 @@ class IGLMEvaluator(Evaluator):
                 temperature=temperature,
             ).detach()
 
-            seq = seq[0]  # Squeeze out batch   dimension
+            tokens = tokens[0]  # Squeeze out batch   dimension
 
             # decode sequence ids for IgLM
             decoded_sequence = [
                 self.tokenizer.tokenizer.convert_ids_to_tokens([next_token][0])
-                for next_token in seq.tolist()
+                for next_token in tokens.tolist()
             ][3:-1]
-            infilled_sequence = "".join(
+            
+            decoded_infill = "".join(
                 decoded_sequence[decoded_sequence.index("[SEP]") + 1 :]
             )
+
             decoded_sequence = "".join(
                 decoded_sequence[: decoded_sequence.index("[SEP]") - 1]
             )
-            decoded_sequence = decoded_sequence.replace("[MASK]", infilled_sequence)
+            decoded_sequence = decoded_sequence.replace("[MASK]", decoded_infill)
+            
+            decoded_sequences.append(decoded_sequence)
+            decoded_infills.append(decoded_infill)
 
-        return decoded_sequence, infilled_sequence
+        return decoded_sequences, decoded_infills
 
     def run(self, output_dir):
 
@@ -113,7 +125,7 @@ class IGLMEvaluator(Evaluator):
             for idx, sequence in enumerate(
                 tokenized_batch['input_ids'].to(self.device)
             ):
-                sampled_sequence, sampled_tokens = self.generate(
+                full_sampled_sequences, infilled_sequences = self.generate(
                     sequence,
                     self.num_to_generate,
                     self.top_p,
@@ -121,24 +133,34 @@ class IGLMEvaluator(Evaluator):
                     self.max_length,
                     self.bad_word_ids,
                 )
-                chains = {"L": batch["LC"][idx], "H": sampled_sequence}
-                # score the sequence under some eval function (SASA)
-                try:
-                    score = [
-                        metric_function(chains)
-                        for metric_function in self.metric_function
-                    ]
-                except Exception:
-                    score = None
 
-                logger.info(
-                    f"rank {dist.get_rank()}; {batch_number}, seq {sampled_sequence}; infilled seq {sampled_tokens}; score {score}"
-                )
 
-                scores.append(score)
-                generated_sequences.append(sampled_tokens)
-                heavy_chains.append(sampled_sequence)
-                light_chains.append(batch["LC"][idx])
+                for full_sampled_sequence, infilled_sequence in zip(full_sampled_sequences, infilled_sequences):
+
+                    chains = {
+                            "L": batch["LC"][idx], 
+                            "H": full_sampled_sequence, 
+                            "seq_pre_mask" : tokenized_batch["seq_pre_mask"], 
+                            "seq_post_mask" : tokenized_batch["seq_post_mask"]
+                             }
+                    
+                    # score the sequence under some eval function (SASA)
+                    try:
+                        score = [
+                            metric_function(chains)
+                            for metric_function in self.metric_function
+                        ]
+                    except Exception:
+                        score = None
+
+                    logger.info(
+                        f"rank {dist.get_rank()}; {batch_number}, seq {full_sampled_sequence}; infilled seq {infilled_sequence}; score {score}"
+                    )
+
+                    scores.append(score)
+                    generated_sequences.append(infilled_sequence)
+                    heavy_chains.append(full_sampled_sequence)
+                    light_chains.append(batch["LC"][idx])
 
         eval_df['completion'] = generated_sequences
         eval_df['HC'] = heavy_chains

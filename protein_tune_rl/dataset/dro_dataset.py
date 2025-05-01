@@ -18,6 +18,7 @@ class DRODataset(Dataset):
             "prompts": self.data[self.chain].iloc[idx],
             "completions": self.data[self.region].iloc[idx],
             "rewards": float(self.data[self.reward].iloc[idx]),
+            "LC": self.data.LC.iloc[idx],
         }
 
 

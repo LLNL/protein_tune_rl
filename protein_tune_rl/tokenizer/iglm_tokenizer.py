@@ -5,6 +5,7 @@ import transformers
 class IgLMTokenizer:
     def __init__(self, hf_config, padding_side="right"):
 
+        self.padding_side = padding_side
         self.tokenizer = transformers.BertTokenizerFast(
             vocab_file=f"{hf_config}/vocab.txt",
             do_lower_case=False,

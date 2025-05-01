@@ -83,10 +83,12 @@ class PPO:
 
         return -torch.min(surr1, surr2).mean()
 
-    def step(self, reward, baseline, logp, entropy, sequences):
-        init_size = sequences["init_size"]
-        state = sequences["model_input"]
-        action = state["input_ids"][:, init_size:].detach()
+    def step(self, reward, baseline, logp, entropy, batch):
+        init_size = batch["init_size"]
+        action = batch["input_ids"][:, init_size:].detach()
+        state = {"input_ids": batch["input_ids"], 
+                 "attention_mask": batch["attention_mask"], 
+                 "position_ids" : batch["position_ids"]}
 
         old_logp = logp.detach()
 
@@ -96,6 +98,8 @@ class PPO:
         elif self.baseline == "state_value":
             value = self.state_value(**state)
             adv = reward - value.detach()
+
+            
 
         if self.normalize_adv:
             if self.baseline == "mean":

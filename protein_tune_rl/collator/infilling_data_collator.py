@@ -10,6 +10,7 @@ class InfillingDataCollator(DataCollatorWithPadding):
         self,
         tokenizer: PreTrainedTokenizerBase,
         species_token: str = "[HUMAN]",
+        
         mask_region: str = "HCDR3",
     ):
         assert tokenizer.padding_side == "left"

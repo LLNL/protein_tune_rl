@@ -40,10 +40,6 @@ class DROTrainer(Trainer):
             reward=self.config["dataset"]["reward"],
         )
 
-        self.dataloader = create_dataloader(
-            self.dataset, batch_size=self.batch_size, shuffle=False
-        )
-
         self.tokenizer = create_tokenizer(
             name=self.config['tokenizer']['name'],
             tokenizer_config=self.config['tokenizer']['tokenizer_config'],
@@ -53,6 +49,10 @@ class DROTrainer(Trainer):
             name=self.config['collator']['name'],
             model_name='gpt2',
             tokenizer=self.tokenizer,
+        )
+
+        self.dataloader = create_dataloader(
+            self.dataset, batch_size=self.batch_size, shuffle=False,
         )
 
         self.policy = create_model(
@@ -110,6 +110,8 @@ class DROTrainer(Trainer):
 
                 self.policy_optimizer.zero_grad()
                 self.value_optimizer.zero_grad()
+
+                # print(batch)
 
                 tokenized_batch = self.collator(batch)
 

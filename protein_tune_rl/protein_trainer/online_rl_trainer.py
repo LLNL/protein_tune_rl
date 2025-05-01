@@ -55,7 +55,8 @@ class OnlineRLSampler:
         )
 
         tokenizer = create_tokenizer(name="iglm_tokenizer", **config['tokenizer'])
-        self.tokenizer = tokenizer.tokenizer
+        self.tokenizer = tokenizer
+        
 
         self.collator = create_collator(
             name="infilling",

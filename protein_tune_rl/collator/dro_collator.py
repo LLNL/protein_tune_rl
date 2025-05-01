@@ -1,8 +1,10 @@
+import re
+
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
 
-class DROCollator:
+class DRODataCollator:
     def __init__(
         self,
         model_name,
@@ -47,7 +49,9 @@ class DROCollator:
 
     def __call__(self, batch, eval=False):
 
-        masked_prompts, masked_prompts_with_completions, spaced_completions = (
+        masked_prompts, masked_prompts_with_completions, spaced_completions, sequences_pre_mask, sequences_post_mask = (
+            [],
+            [],
             [],
             [],
             [],
@@ -59,6 +63,10 @@ class DROCollator:
                 ' '.join(str(completion)), "[MASK]"
             )
             spaced_completions.append(" ".join(completion) + "[CLS]")
+
+            masked_region_idx = re.search(completion, prompt)
+            seq_pre_mask = prompt[: masked_region_idx.start()]
+            seq_post_mask = prompt[masked_region_idx.end() :]
 
             prompt = (
                 "[HEAVY]"
@@ -84,6 +92,9 @@ class DROCollator:
                 "[HEAVY]" + " " + "[HUMAN]" + " " + masked_prompt + " " + "[SEP]"
             )
 
+            sequences_pre_mask.append(seq_pre_mask)
+            sequences_post_mask.append(seq_post_mask)
+
         (
             tokenized_masked_prompts_with_completions,
             __,
@@ -99,6 +110,8 @@ class DROCollator:
                 "prompts": tokenized_masked_prompts,
                 "labels": input_mask,
                 "LC": batch["LC"],
+                "seq_pre_mask" : sequences_pre_mask,
+                "seq_post_mask" : sequences_post_mask
             }
 
         return {
@@ -106,4 +119,6 @@ class DROCollator:
             "prompts": tokenized_masked_prompts,
             "labels": input_mask,
             "rewards": batch["rewards"],
+            "seq_pre_mask" : sequences_pre_mask,
+            "seq_post_mask" : sequences_post_mask
         }

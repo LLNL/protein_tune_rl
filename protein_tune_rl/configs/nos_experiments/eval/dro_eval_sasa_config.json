@@ -24,9 +24,21 @@
     },
 
     "metric":
-    {
-        "name" : ["sasa", "prot_gpt2_scoring"]
-    },
+    [
+        {
+            "name": "sasa",
+            "params": { }
+        },
+       
+        
+        {
+            "name" : "iglm_kl_scoring",
+            "params" : { 
+                        "path" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/policy",
+                        "reference_path" : "/usr/workspace/vaccines/abag_seq/weights/trained/iglm"
+                        }
+        }
+    ],
 
     "collator" : 
     {
@@ -63,7 +75,6 @@
                             [32]]
     }
 
-   
-    
+
      
 }
