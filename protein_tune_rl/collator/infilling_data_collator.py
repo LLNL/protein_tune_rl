@@ -9,8 +9,7 @@ class InfillingDataCollator(DataCollatorWithPadding):
     def __init__(
         self,
         tokenizer: PreTrainedTokenizerBase,
-        species_token: str = "[HUMAN]",
-        
+        species_token: str = "[HUMAN]",        
         mask_region: str = "HCDR3",
     ):
         assert tokenizer.padding_side == "left"

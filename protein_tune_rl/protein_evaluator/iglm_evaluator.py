@@ -55,12 +55,6 @@ class IGLMEvaluator(Evaluator):
             vocab_size=self.tokenizer.vocab_size,
         ).to(self.device)
 
-        for metric in self.config['metric']:
-            print(metric)
-            print(metric["name"])
-            print(metric["params"])
-            #print(self.config['metric']['name'][metric]["params"])
-
         self.metric_function = []
         self.metric_function.extend(
             create_metric(name=metric["name"])(**metric["params"]) for metric in self.config['metric']
@@ -115,7 +109,7 @@ class IGLMEvaluator(Evaluator):
     def run(self, output_dir):
 
         eval_df = pd.DataFrame()
-        scores, generated_sequences, heavy_chains, light_chains = [], [], [], []
+        prompts, scores, generated_sequences, heavy_chains, light_chains = [], [], [], [], []
 
         for batch_number, batch in enumerate(iter(self.dataloader)):
             self.policy.eval()
@@ -133,7 +127,6 @@ class IGLMEvaluator(Evaluator):
                     self.max_length,
                     self.bad_word_ids,
                 )
-
 
                 for full_sampled_sequence, infilled_sequence in zip(full_sampled_sequences, infilled_sequences):
 
@@ -161,12 +154,15 @@ class IGLMEvaluator(Evaluator):
                     generated_sequences.append(infilled_sequence)
                     heavy_chains.append(full_sampled_sequence)
                     light_chains.append(batch["LC"][idx])
+                    prompts.append(tokenized_batch["seq_pre_mask"][0] + "[MASK]" + tokenized_batch["seq_post_mask"][0])
 
         eval_df['completion'] = generated_sequences
         eval_df['HC'] = heavy_chains
         eval_df['LC'] = light_chains
-        for idx, metric in enumerate(self.config['metric']['name']):
-            eval_df[str(metric)] = [metric_score[idx] for metric_score in scores]
+        eval_df['prompts'] = prompts
+        
+        for idx, metric in enumerate(self.config['metric']):
+            eval_df[str(metric['name'])] = [metric_score[idx] for metric_score in scores]
 
         final_df = self.gather_dataframes(eval_df)
 
