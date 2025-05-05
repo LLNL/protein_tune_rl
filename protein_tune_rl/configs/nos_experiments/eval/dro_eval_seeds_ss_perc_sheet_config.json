@@ -4,13 +4,13 @@
         {
             "name" : "ss_perc_sheet",             
             "batch_size" : 1,
-            "model_name" : "iglm"
+            "model_name" : "dro"
         },
 
     "dataset" :
         {
             "name" : "dro_eval",             
-            "data_directory" : "../data/nos_data/eval_data_v3.csv",
+            "data_directory" : "../data/nos_data/poas_seeds_eval.csv",
             "chain" : "HC",
             "region" : "HCDR3"   
         },
@@ -20,23 +20,34 @@
     "tokenizer" : 
     {
             "name" : "iglm_tokenizer",
-            "tokenizer_config" : "/usr/workspace/vaccines/abag_seq/weights/trained/iglm"
+            "tokenizer_config" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/policy"
     },
 
     "metric":
-    {
-        "name" : ["ss_perc_sheet", "prot_gpt2_scoring"]
-    },
+    [
+        {
+            "name": "ss_perc_sheet",
+            "params": 
+            {
+            }
+        },
+       
+        
+        {
+            "name": "prot_gpt2_scoring",
+            "params": { }
+        }
+    ],
 
     "collator" : 
     {
-            "name" : "dro_infilling"       
+            "name" : "dro_infilling"        
     },
 
     "policy_model" : 
     {
         "name" : "iglm",
-        "dir" : "/usr/workspace/vaccines/abag_seq/weights/trained/iglm"
+        "dir" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/policy"
             
             
     },
@@ -44,7 +55,7 @@
     "generator" : 
 
     {
-        "num_to_generate" : 1, 
+        "num_to_generate" : 10, 
         "top_p" : 20,
         "temperature" :  0.7,
         "max_length" : 150,
@@ -67,3 +78,4 @@
     
      
 }
+

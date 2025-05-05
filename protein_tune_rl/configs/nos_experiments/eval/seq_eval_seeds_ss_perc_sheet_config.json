@@ -1,0 +1,42 @@
+
+{
+    "evaluator":
+        {
+            "name" : "ss_perc_sheet_sequence",             
+            "batch_size" : 1,
+            "model_name" : "seeds"
+        },
+
+    "dataset" :
+        {
+            "name" : "dro_eval",             
+            "data_directory" : "../data/nos_data/poas_seeds_eval.csv",
+            "chain" : "HC",
+            "region" : "HCDR3"   
+        },
+    
+    "experiment_directory" : "/p/vast1/hayes56/optlm/",
+   
+
+    "metric":
+    [
+        {
+            "name": "ss_perc_sheet",
+            "params": 
+            {
+            }
+        },
+       
+        
+        {
+            "name": "prot_gpt2_scoring",
+            "params": { }
+        }
+    ]
+
+    
+
+   
+    
+     
+}

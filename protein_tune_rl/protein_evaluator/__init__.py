@@ -21,4 +21,9 @@ def create_evaluator(name):
             DROValueEvaluator
 
         return DROValueEvaluator
+    
+    if "sequence" in name:
+        from protein_tune_rl.protein_evaluator.sequence_evaluator import \
+            SequenceEvaluator
+        return SequenceEvaluator 
 
