@@ -4,7 +4,7 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 
 
-class DRODataCollator:
+class DROCollator:
     def __init__(
         self,
         model_name,

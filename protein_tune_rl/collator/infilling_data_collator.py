@@ -5,7 +5,7 @@ import torch
 from transformers import DataCollatorWithPadding, PreTrainedTokenizerBase
 
 
-class InfillingDataCollator(DataCollatorWithPadding):
+class InfillingCollator(DataCollatorWithPadding):
     def __init__(
         self,
         tokenizer: PreTrainedTokenizerBase,
