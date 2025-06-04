@@ -2,7 +2,7 @@
 {
     "evaluator":
         {
-            "name" : "sasa",             
+            "name" : "sasa",            
             "batch_size" : 1,
             "model_name" : "dro"
         },
@@ -20,7 +20,8 @@
     "tokenizer" : 
     {
             "name" : "iglm_tokenizer",
-            "tokenizer_config" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/policy"
+            "tokenizer_config" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/policy",
+            "padding_side": "right"
     },
 
     "metric":

@@ -20,7 +20,8 @@
     "tokenizer" : 
     {
             "name" : "iglm_tokenizer",
-            "tokenizer_config" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/policy"
+            "tokenizer_config" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/policy",
+            "padding_side": "right"
     },
 
     "metric":
@@ -30,8 +31,7 @@
             "params": 
             {
             }
-        },
-       
+        },       
         
         {
             "name": "prot_gpt2_scoring",

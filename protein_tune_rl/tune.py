@@ -20,6 +20,7 @@ warnings.filterwarnings("ignore")
 class ProteinTuneRL:
     def __init__(self, config, mode):
         self.exp_output_dir = None
+        tau = None
 
         # read the config file
         with open(config) as f:
@@ -27,6 +28,7 @@ class ProteinTuneRL:
 
         self.exp_output_dir = Path(self.config['experiment_directory'])
         fixed_output_dir = self.config.pop('fixed_experiment_directory', False)
+        
         try:
             if mode == "tune":
                 if not fixed_output_dir:
@@ -38,12 +40,13 @@ class ProteinTuneRL:
                     if 'learning_rate' in self.config['trainer']:
                         lr = self.config['trainer']['learning_rate']
                     else:
-                        lr = self.config['optimizer']['learning_rate']
-
+                        lr = self.config['optimizer']['learning_rate']                    
                     if 'tau' in self.config['trainer']:
                         tau = self.config['trainer']['tau']
-                    else:
+                    elif 'tau' in self.config['optimizer']:
                         tau = self.config['optimizer']['tau']
+
+
 
                     exp_output_dir = (
                         self.config['trainer']['name']
@@ -56,9 +59,11 @@ class ProteinTuneRL:
                         + str(self.config['trainer']['batch_size'])
                         + '_lr_'
                         + str(lr)
-                        + '_tau_'
-                        + str(tau)
+                        
                     )
+
+                    if tau is not None:
+                        exp_output_dir += '_tau_'+ str(tau)
 
                 self.protein_tuner = create_trainer(self.config['trainer']['name'])(
                     self.config

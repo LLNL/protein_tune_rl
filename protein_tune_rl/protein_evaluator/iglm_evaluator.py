@@ -37,10 +37,11 @@ class IGLMEvaluator(Evaluator):
         self.dataloader = create_dataloader(
             self.dataset, batch_size=self.batch_size, shuffle=False
         )
-
+        
         self.tokenizer = create_tokenizer(
             name=self.config['tokenizer']['name'],
             tokenizer_config=self.config['tokenizer']['tokenizer_config'],
+            padding_side=self.config['tokenizer']['padding_side']
         )
 
         self.collator = create_collator(

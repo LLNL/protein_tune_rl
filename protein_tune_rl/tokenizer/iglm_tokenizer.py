@@ -3,13 +3,13 @@ import transformers
 
 
 class IgLMTokenizer:
-    def __init__(self, hf_config, padding_side="right"):
+    def __init__(self, config, padding_side):
 
         self.padding_side = padding_side
         self.tokenizer = transformers.BertTokenizerFast(
-            vocab_file=f"{hf_config}/vocab.txt",
+            vocab_file=f"{config}/vocab.txt",
             do_lower_case=False,
-            padding_side=padding_side,
+            padding_side=self.padding_side,
         )
         self.tokenizer.add_special_tokens(IgLMTokenizer.conditional_tokens())
         self.vocab_size = len(self.tokenizer)
