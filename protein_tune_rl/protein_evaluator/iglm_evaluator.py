@@ -97,7 +97,7 @@ class IGLMEvaluator(Evaluator):
             )
 
             decoded_sequence = "".join(
-                decoded_sequence[: decoded_sequence.index("[SEP]") - 1]
+                decoded_sequence[: decoded_sequence.index("[SEP]")]
             )
             decoded_sequence = decoded_sequence.replace("[MASK]", decoded_infill)
             
