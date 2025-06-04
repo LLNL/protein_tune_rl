@@ -90,7 +90,7 @@ class IGLMEvaluator(Evaluator):
             decoded_sequence = [
                 self.tokenizer.tokenizer.convert_ids_to_tokens([next_token][0])
                 for next_token in tokens.tolist()
-            ][3:-1]
+            ][2:-1]
             
             decoded_infill = "".join(
                 decoded_sequence[decoded_sequence.index("[SEP]") + 1 :]
