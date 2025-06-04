@@ -5,7 +5,7 @@ def create_collator(name, model_name=None, tokenizer=None, **kwargs):
         return DRODataCollator(model_name=model_name, tokenizer=tokenizer)
 
     if name == "infilling":
-        from optlm.protein_tune_rl.protein_tune_rl.collator.infilling_data_collator import \
+        from protein_tune_rl.collator.infilling_data_collator import \
             InfillingDataCollator
 
         return InfillingDataCollator(tokenizer=tokenizer, **kwargs)
