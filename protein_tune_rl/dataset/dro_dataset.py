@@ -1,16 +1,14 @@
 import pandas as pd
 from torch.utils.data import Dataset
 
+from protein_tune_rl.dataset.infilling_dataset import InfillingDataset
 
-class DRODataset(Dataset):
+
+class DRODataset(InfillingDataset):
     def __init__(self, data_directory, chain, region, reward):
-        self.data = pd.read_csv(data_directory)
-        self.chain = chain
-        self.region = region
+        super().__init__(data_directory, chain, region)
         self.reward = reward
 
-    def __len__(self):
-        return len(self.data)
 
     def __getitem__(self, idx):
 
@@ -24,12 +22,7 @@ class DRODataset(Dataset):
 
 class DROEvalDataset(Dataset):
     def __init__(self, data_directory, chain, region):
-        self.data = pd.read_csv(data_directory)
-        self.chain = chain
-        self.region = region
-
-    def __len__(self):
-        return len(self.data)
+        super().__init__(data_directory, chain, region)
 
     def __getitem__(self, idx):
 

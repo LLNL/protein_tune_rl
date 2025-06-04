@@ -19,7 +19,7 @@ def create_dataset(name, data_directory, chain=None, region=None, reward=None):
     if name == "infilling":
         from protein_tune_rl.dataset.infilling_dataset import InfillingDataset
 
-        return InfillingDataset(data_directory=data_directory)
+        return InfillingDataset(data_directory=data_directory, chain=chain, region=region)
 
     else:
         return NotImplementedError

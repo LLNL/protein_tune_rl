@@ -85,8 +85,12 @@ class PPO:
 
     def step(self, reward, baseline, logp, entropy, batch):
         init_size = batch["init_size"]
-        action = batch["model_input"]["input_ids"][:, init_size:].detach()
-        state = batch["model_input"]
+        action = batch["input_ids"][:, init_size:].detach()
+        state = {
+                 "input_ids" : batch["input_ids"], 
+                 "attention_mask" : batch["attention_mask"], 
+                 "position_ids" : batch["position_ids"]
+                }
 
         old_logp = logp.detach()
 

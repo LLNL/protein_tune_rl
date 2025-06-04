@@ -9,23 +9,21 @@ class InfillingCollator(DataCollatorWithPadding):
     def __init__(
         self,
         tokenizer: PreTrainedTokenizerBase,
-        species_token: str = "[HUMAN]",        
-        mask_region: str = "HCDR3",
+ 
     ):
         assert tokenizer.padding_side == "left"
         self.tokenizer = tokenizer
-        self.conditional_tokens = f"{species_token} [HEAVY] "
+        self.conditional_tokens = f"[HUMAN] [HEAVY] "
         self.mask_token = "[MASK]"
-        self.mask_region = mask_region
 
-    def __call__(self, batch: List[Dict[str, Any]]) -> Dict[str, Any]:
+
+    def __call__(self, batch):
         infilling_inputs = []
 
         output = {"LC": [], "masked_seq": [], "seq_pre_mask": [], "seq_post_mask": []}
 
-        for seq in batch:
-            seq_HC = seq["HC"]
-            masked_seq = seq[self.mask_region]
+        for seq_HC, seq_LC, masked_seq, in zip(batch["prompts"], batch["LC"], batch["region"]):
+           
 
             masked_region_idx = re.search(masked_seq, seq_HC)
             seq_pre_mask = seq_HC[: masked_region_idx.start()]
@@ -44,13 +42,15 @@ class InfillingCollator(DataCollatorWithPadding):
             output["seq_pre_mask"].append(seq_pre_mask)
             output["seq_post_mask"].append(seq_post_mask)
             output["masked_seq"].append(masked_seq)
-            output["LC"].append(seq["LC"])
+            output["LC"].append(seq_LC)
 
-        tokenized_input = self.tokenizer(infilling_inputs, padding=True)
+        # TODO this needs to be resolved. Are we using tokenizer.tokenizer or use the tokenizer we pass.
+        tokenized_input = self.tokenizer.tokenizer(infilling_inputs, padding=True)
         input_ids = tokenized_input["input_ids"]
         attention_mask = tokenized_input["attention_mask"]
 
-        for i, seq in enumerate(batch):
+        for i in range(len(batch["prompts"])):
+            print(i)
             num_pads = len(input_ids[i]) - sum(attention_mask[i])
             input_ids[i].pop(num_pads)
             attention_mask[i].pop(num_pads)
@@ -60,12 +60,9 @@ class InfillingCollator(DataCollatorWithPadding):
         position_ids = attention_mask.cumsum(-1) - 1
         position_ids.masked_fill_(attention_mask == 0, 0)
 
-        model_input = {
-            "input_ids": input_ids,
-            "attention_mask": attention_mask,
-            "position_ids": position_ids,
-        }
-        output["model_input"] = model_input
+        output["input_ids"] = input_ids
+        output["attention_mask"] = attention_mask
+        output["position_ids"] = position_ids
         output["init_size"] = input_ids.size()[-1]
 
         return output

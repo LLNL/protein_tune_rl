@@ -46,8 +46,8 @@ class IGLMEvaluator(Evaluator):
 
         self.collator = create_collator(
             name=self.config['collator']['name'],
-            model_name='gpt2',
             tokenizer=self.tokenizer,
+            eval=True
         )
 
         self.policy = create_model(
@@ -115,7 +115,7 @@ class IGLMEvaluator(Evaluator):
         for batch_number, batch in enumerate(iter(self.dataloader)):
             self.policy.eval()
 
-            tokenized_batch = self.collator(batch, eval=True)
+            tokenized_batch = self.collator(batch)
 
             for idx, sequence in enumerate(
                 tokenized_batch['input_ids'].to(self.device)

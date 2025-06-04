@@ -7,11 +7,11 @@ from torch.nn.utils.rnn import pad_sequence
 class DROCollator:
     def __init__(
         self,
-        model_name,
         tokenizer,
+        eval=False
     ):
-        self.model_name = model_name
         self.tokenizer = tokenizer
+        self.eval=eval
 
     def create_mask(self, tokenized_sequences, tokenized_completions):
         batch_mask = []
@@ -47,7 +47,7 @@ class DROCollator:
         input_mask = self._pad_ragged_tensors(mask)
         return input_sequences, input_completions, input_mask
 
-    def __call__(self, batch, eval=False):
+    def __call__(self, batch):
 
         masked_prompts, masked_prompts_with_completions, spaced_completions, sequences_pre_mask, sequences_post_mask = (
             [],
@@ -82,7 +82,7 @@ class DROCollator:
                 + "[CLS]"
             )
 
-            if eval:
+            if self.eval:
                 prompt = (
                     '[HEAVY]' + " " + "[HUMAN]" + " " + masked_prompt + " " + "[SEP]"
                 )
@@ -104,7 +104,7 @@ class DROCollator:
             masked_prompts, spaced_completions
         )
 
-        if eval:
+        if self.eval:
             return {
                 "input_ids": tokenized_masked_prompts_with_completions,
                 "prompts": tokenized_masked_prompts,
