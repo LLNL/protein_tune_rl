@@ -15,7 +15,9 @@
     "dataset":
     {
         "name": "infilling",
-        "data_directory": "../data/nos_data/training_data.csv"
+        "data_directory": "../data/nos_data/training_data.csv",
+        "chain" : "HC",
+        "region" : "HCDR3"
     },
 
     "tokenizer":
@@ -26,7 +28,7 @@
 
     "collator":
     {
-        "mask_region": "HCDR3"
+        "name" : "infilling"  
     },
 
     "policy_model":

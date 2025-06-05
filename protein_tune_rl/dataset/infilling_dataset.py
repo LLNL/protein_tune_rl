@@ -13,10 +13,17 @@ class InfillingDataset(Dataset):
 
     def __getitem__(self, idx):
 
+        # return {
+        #     "prompts": self.data[self.chain].iloc[idx],
+        #     "region" : self.data[self.region].iloc[idx],
+        #     "LC": self.data.LC.iloc[idx],
+        # }
+        item = self.data.iloc[idx]
         return {
-            "prompts": self.data[self.chain].iloc[idx],
-            "region" : self.data[self.region].iloc[idx],
-            "LC": self.data.LC.iloc[idx],
+            'prompts': [item[self.chain]],
+            'region': [item[self.region]],
+            'LC': [item['LC']]
         }
+
 
 

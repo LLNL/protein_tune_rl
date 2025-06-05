@@ -16,15 +16,17 @@ class InfillingCollator(DataCollatorWithPadding):
         self.conditional_tokens = f"[HUMAN] [HEAVY] "
         self.mask_token = "[MASK]"
 
+    
 
     def __call__(self, batch):
-        infilling_inputs = []
+        infilling_inputs = []       
+
+        batch = batch[0]
 
         output = {"LC": [], "masked_seq": [], "seq_pre_mask": [], "seq_post_mask": []}
 
         for seq_HC, seq_LC, masked_seq, in zip(batch["prompts"], batch["LC"], batch["region"]):
            
-
             masked_region_idx = re.search(masked_seq, seq_HC)
             seq_pre_mask = seq_HC[: masked_region_idx.start()]
             seq_post_mask = seq_HC[masked_region_idx.end() :]
@@ -50,7 +52,7 @@ class InfillingCollator(DataCollatorWithPadding):
         attention_mask = tokenized_input["attention_mask"]
 
         for i in range(len(batch["prompts"])):
-            print(i)
+            
             num_pads = len(input_ids[i]) - sum(attention_mask[i])
             input_ids[i].pop(num_pads)
             attention_mask[i].pop(num_pads)

@@ -115,6 +115,7 @@ class PPO:
 
             adv = (adv - adv_mean) / (adv_std + 1e-10)
 
+        print(logp)
         if len(logp) % self.minibatch_size != 0:
             raise ValueError("Minibatch size must be a factor of the batch size")
 

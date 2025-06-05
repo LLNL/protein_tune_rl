@@ -20,7 +20,7 @@ class DRODataset(InfillingDataset):
         }
 
 
-class DROEvalDataset(Dataset):
+class DROEvalDataset(InfillingDataset):
     def __init__(self, data_directory, chain, region):
         super().__init__(data_directory, chain, region)
 
