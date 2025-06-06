@@ -1,8 +1,7 @@
 import os
 import sys
-
+from collections import defaultdict
 import torch
-
 
 def compute_logp(model, state, action):
     model_out = model(**state)

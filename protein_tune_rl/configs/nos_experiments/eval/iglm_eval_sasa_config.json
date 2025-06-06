@@ -25,9 +25,28 @@
     },
 
     "metric":
-    {
-        "name" : ["sasa", "prot_gpt2_scoring"]
+    [
+        {
+            "name": "sasa",
+            "params":
+            {
+                "folding_tool": "igfold",
+                "options":
+                {
+                    "num_models": 1,
+                    "do_refine": false,
+                    "use_openmm": true,
+                    "do_renum": false
+                }
+            }
     },
+   
+    
+    {
+        "name": "prot_gpt2_scoring",
+        "params": { }
+    }
+    ],
 
     "collator" : 
     {

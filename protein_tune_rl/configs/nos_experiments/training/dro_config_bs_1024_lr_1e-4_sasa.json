@@ -33,7 +33,7 @@
 
     "collator" : 
     {
-            "name" : "dro"       
+            "name" : "dro_infilling"       
     },
 
     "policy_model" : 

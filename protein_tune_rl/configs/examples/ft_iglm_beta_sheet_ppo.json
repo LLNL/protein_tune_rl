@@ -15,7 +15,7 @@
     "dataset":
     {
         "name": "infilling",
-        "data_directory": "../data/nos_data/training_data.csv",
+        "data_directory": "../data/nos_data/training_data_v3.csv",
         "chain" : "HC",
         "region" : "HCDR3"
     },

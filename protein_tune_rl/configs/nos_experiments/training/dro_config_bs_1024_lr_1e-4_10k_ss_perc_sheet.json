@@ -4,7 +4,7 @@
         {
             "name" : "dro",             
             "total_optimization_steps" : 100000, 
-            "batch_size" : 1024,
+            "batch_size" : 10,
             "check_point_freq" : 1000,
             "learning_rate" :  1e-4,
             "tau" : 0.75,
@@ -33,7 +33,7 @@
 
     "collator" : 
     {
-            "name" : "dro"       
+            "name" : "dro_infilling"       
     },
 
     "policy_model" : 

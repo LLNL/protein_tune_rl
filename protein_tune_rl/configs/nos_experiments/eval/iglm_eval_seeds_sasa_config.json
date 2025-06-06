@@ -28,8 +28,16 @@
     [
         {
             "name": "sasa",
-            "params": 
+            "params":
             {
+                "folding_tool": "igfold",
+                "options":
+                {
+                    "num_models": 1,
+                    "do_refine": false,
+                    "use_openmm": true,
+                    "do_renum": false
+                }
             }
         },
        

@@ -47,12 +47,14 @@ class DROTrainer(Trainer):
 
         self.collator = create_collator(
             name=self.config['collator']['name'],
-            model_name='gpt2',
             tokenizer=self.tokenizer,
         )
 
         self.dataloader = create_dataloader(
-            self.dataset, batch_size=self.batch_size, shuffle=False,
+            self.dataset, 
+            batch_size=self.batch_size, 
+            shuffle=False,
+            #collate_fn=self.collator,
         )
 
         self.policy = create_model(
@@ -112,6 +114,7 @@ class DROTrainer(Trainer):
                 self.value_optimizer.zero_grad()
 
                 # print(batch)
+                # print("")
 
                 tokenized_batch = self.collator(batch)
 

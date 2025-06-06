@@ -25,9 +25,20 @@
     },
 
     "metric":
-    {
-        "name" : ["ss_perc_sheet", "prot_gpt2_scoring"]
-    },
+    [
+        {
+            "name": "ss_perc_sheet",
+            "params": 
+            {
+            }
+        },
+       
+        
+        {
+            "name": "prot_gpt2_scoring",
+            "params": { }
+        }
+    ],
 
     "collator" : 
     {

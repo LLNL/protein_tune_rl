@@ -4,6 +4,7 @@ from collections import defaultdict
 
 import torch
 from transformers import DataCollatorWithPadding, PreTrainedTokenizerBase
+from protein_tune_rl.util.util import collate_batch
 
 
 class InfillingCollator(DataCollatorWithPadding):
@@ -16,19 +17,14 @@ class InfillingCollator(DataCollatorWithPadding):
         self.tokenizer = tokenizer
         self.conditional_tokens = f"[HUMAN] [HEAVY] "
         self.mask_token = "[MASK]"
-
     
 
-    def __call__(self, input_batch):
-        infilling_inputs = []            
+    def __call__(self, batch):
+        infilling_inputs = []      
 
-        batch = defaultdict(list)
+        # print(input_batch)      
 
-        for d in input_batch:
-            for key, value_list in d.items():
-                batch[key].extend(value_list)
-
-        batch = dict(batch)        
+        # batch = collate_batch(input_batch)              
 
         output = {"LC": [], "masked_seq": [], "seq_pre_mask": [], "seq_post_mask": []}
 

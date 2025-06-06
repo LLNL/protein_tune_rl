@@ -80,7 +80,7 @@ class OnlineRLSampler:
             self.dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            collate_fn=self.collator,
+            #collate_fn=self.collator,
         )
 
         if torch.cuda.is_available():
@@ -239,7 +239,8 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
         current_step = 0
         while current_step < self.total_optimization_steps:
             for batch_number, batch in enumerate(iter(self.dataloader)):
-                sampled_seqs, logp, entropy = self._sample_batch(self.model, batch)
+                tokenized_batch = self.collator(batch)
+                sampled_seqs, logp, entropy = self._sample_batch(self.model, tokenized_batch)
 
                 reward = torch.zeros(len(sampled_seqs))
                 for i, seq in enumerate(sampled_seqs):
@@ -252,9 +253,9 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
                 reward_mean /= dist.get_world_size()
 
                 if self.use_KL_penalty:
-                    reward += self.KL_penalty(logp, batch)
+                    reward += self.KL_penalty(logp, tokenized_batch)
 
-                self.optimizer.step(reward, reward_mean, logp, entropy, batch)
+                self.optimizer.step(reward, reward_mean, logp, entropy, tokenized_batch)
 
                 reward_mean = reward_mean.cpu().numpy()
                 logger.info(f"step: {current_step}, reward mean: {reward_mean}")

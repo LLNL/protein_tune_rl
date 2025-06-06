@@ -34,9 +34,6 @@ class IGLMEvaluator(Evaluator):
             region=self.config["dataset"]["region"],
         )
 
-        self.dataloader = create_dataloader(
-            self.dataset, batch_size=self.batch_size, shuffle=False
-        )
         
         self.tokenizer = create_tokenizer(
             name=self.config['tokenizer']['name'],
@@ -48,6 +45,14 @@ class IGLMEvaluator(Evaluator):
             name=self.config['collator']['name'],
             tokenizer=self.tokenizer,
             eval=True
+        )
+
+
+        self.dataloader = create_dataloader(
+            self.dataset, 
+            batch_size=self.batch_size, 
+            shuffle=True,
+            #collate_fn=self.collator
         )
 
         self.policy = create_model(
@@ -113,6 +118,7 @@ class IGLMEvaluator(Evaluator):
         prompts, scores, generated_sequences, heavy_chains, light_chains = [], [], [], [], []
 
         for batch_number, batch in enumerate(iter(self.dataloader)):
+            print(batch)
             self.policy.eval()
 
             tokenized_batch = self.collator(batch)
