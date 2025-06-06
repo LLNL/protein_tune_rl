@@ -58,9 +58,6 @@ class DROCollator:
             [],
         )
 
-        
-
-        batch = batch[0]
         # NOTE: In cases where a given completion pattern occurs in multiple different spans for a given prompt
         # this code will insert multiple masks. This code should be changed to handle such scenarios in the future.
         for prompt, completion in zip(batch["prompts"], batch["completions"]):

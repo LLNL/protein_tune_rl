@@ -1,5 +1,6 @@
 import re
 from typing import Any, Dict, List
+from collections import defaultdict
 
 import torch
 from transformers import DataCollatorWithPadding, PreTrainedTokenizerBase
@@ -18,10 +19,16 @@ class InfillingCollator(DataCollatorWithPadding):
 
     
 
-    def __call__(self, batch):
-        infilling_inputs = []       
+    def __call__(self, input_batch):
+        infilling_inputs = []            
 
-        batch = batch[0]
+        batch = defaultdict(list)
+
+        for d in input_batch:
+            for key, value_list in d.items():
+                batch[key].extend(value_list)
+
+        batch = dict(batch)        
 
         output = {"LC": [], "masked_seq": [], "seq_pre_mask": [], "seq_post_mask": []}
 
