@@ -50,11 +50,7 @@ class DROCollator:
     
 
     def __call__(self, batch):
-
-        #print("here", input_batch)
-        print(batch)
-
-        #batch = collate_batch(input_batch)
+        
         masked_prompts, masked_prompts_with_completions, spaced_completions, sequences_pre_mask, sequences_post_mask = (
             [],
             [],

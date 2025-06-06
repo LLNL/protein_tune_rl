@@ -21,10 +21,7 @@ class InfillingCollator(DataCollatorWithPadding):
 
     def __call__(self, batch):
         infilling_inputs = []      
-
-        # print(input_batch)      
-
-        # batch = collate_batch(input_batch)              
+         
 
         output = {"LC": [], "masked_seq": [], "seq_pre_mask": [], "seq_post_mask": []}
 
