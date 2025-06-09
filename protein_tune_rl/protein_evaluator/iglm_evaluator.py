@@ -12,6 +12,7 @@ from protein_tune_rl.metrics import create_metric
 from protein_tune_rl.models import create_model
 from protein_tune_rl.protein_evaluator.evaluator import Evaluator
 from protein_tune_rl.tokenizer import create_tokenizer
+from protein_tune_rl.util.util import gather_dataframes
 
 
 class IGLMEvaluator(Evaluator):
@@ -19,8 +20,10 @@ class IGLMEvaluator(Evaluator):
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.batch_size = self.config["evaluator"]["batch_size"]
+        if self.batch_size != 1: 
+            raise ValueError("Only batch size of 1 currently supported for evaluation.")
+        
         self.model_name = self.config["evaluator"]["model_name"]
-
         self.num_to_generate = self.config["generator"]["num_to_generate"]
         self.top_p = self.config["generator"]["top_p"]
         self.temperature = self.config["generator"]["temperature"]
@@ -51,8 +54,7 @@ class IGLMEvaluator(Evaluator):
         self.dataloader = create_dataloader(
             self.dataset, 
             batch_size=self.batch_size, 
-            shuffle=True,
-            #collate_fn=self.collator
+            shuffle=True
         )
 
         self.policy = create_model(
@@ -118,7 +120,6 @@ class IGLMEvaluator(Evaluator):
         prompts, scores, generated_sequences, heavy_chains, light_chains = [], [], [], [], []
 
         for batch_number, batch in enumerate(iter(self.dataloader)):
-            print(batch)
             self.policy.eval()
 
             tokenized_batch = self.collator(batch)
@@ -171,61 +172,11 @@ class IGLMEvaluator(Evaluator):
         for idx, metric in enumerate(self.config['metric']):
             eval_df[str(metric['name'])] = [metric_score[idx] for metric_score in scores]
 
-        final_df = self.gather_dataframes(eval_df)
+        final_df = gather_dataframes(eval_df, device=self.device)
 
         if dist.get_rank() == 0:
             final_df.to_csv(f"{output_dir}/{self.model_name}_eval.csv")
 
         return final_df
 
-    def gather_dataframes(self, local_df, group=None):
-        """
-        Gather pandas DataFrames from all processes and combine them on rank 0.
-
-        Args:
-            local_df (pd.DataFrame): Local DataFrame on each process.
-            group (optional): Torch distributed process group.
-
-        Returns:
-            pd.DataFrame on rank 0, None elsewhere.
-        """
-
-        # Serialize the DataFrame using pickle
-        serialized = pickle.dumps(local_df)
-        tensor = torch.ByteTensor(list(serialized)).to(self.device)
-
-        # Gather sizes first
-        local_size = torch.tensor([tensor.numel()], device=self.device)
-        sizes = [
-            torch.tensor([0], device=self.device)
-            for _ in range(dist.get_world_size(group))
-        ]
-        dist.all_gather(sizes, local_size, group=group)
-
-        # Pad tensor to max size
-        max_size = max(s.item() for s in sizes)
-        padded = torch.cat(
-            [
-                tensor,
-                torch.zeros(
-                    max_size - tensor.numel(), dtype=torch.uint8, device=self.device
-                ),
-            ]
-        )
-
-        # Gather all padded tensors
-        gathered = [
-            torch.empty(max_size, dtype=torch.uint8, device=self.device)
-            for _ in range(dist.get_world_size(group))
-        ]
-        dist.all_gather(gathered, padded, group=group)
-
-        if dist.get_rank(group) == 0:
-            dfs = []
-            for t, s in zip(gathered, sizes):
-                raw = bytes(t[: s.item()].tolist())
-                df = pickle.loads(raw)
-                dfs.append(df)
-            return pd.concat(dfs, ignore_index=True)
-
-        return None
+    

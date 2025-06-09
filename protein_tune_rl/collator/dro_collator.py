@@ -2,8 +2,6 @@ import re
 
 import torch
 from torch.nn.utils.rnn import pad_sequence
-from protein_tune_rl.util.util import collate_batch
-
 
 class DROCollator:
     def __init__(
@@ -62,7 +60,7 @@ class DROCollator:
         # NOTE: In cases where a given completion pattern occurs in multiple different spans for a given prompt
         # this code will insert multiple masks. This code should be changed to handle such scenarios in the future.
         for prompt, completion in zip(batch["prompts"], batch["completions"]):
-            print("here", prompt, completion, flush=True)
+
             masked_prompt = ' '.join(prompt).replace(
                 ' '.join(str(completion)), "[MASK]"
             )

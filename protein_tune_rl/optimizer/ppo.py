@@ -103,9 +103,7 @@ class PPO:
             adv = reward - r_mean
         elif self.baseline == "state_value":
             value = self.state_value(**state)
-            adv = reward - value.detach()
-
-            
+            adv = reward - value.detach()            
 
         if self.normalize_adv:
             if self.baseline == "mean":
