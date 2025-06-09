@@ -4,8 +4,6 @@ from collections import defaultdict
 
 import torch
 from transformers import DataCollatorWithPadding, PreTrainedTokenizerBase
-from protein_tune_rl.util.util import collate_batch
-
 
 class InfillingCollator(DataCollatorWithPadding):
     def __init__(
