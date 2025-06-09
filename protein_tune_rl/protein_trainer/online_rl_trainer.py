@@ -80,7 +80,6 @@ class OnlineRLSampler:
             self.dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            #collate_fn=self.collator,
         )
 
         if torch.cuda.is_available():

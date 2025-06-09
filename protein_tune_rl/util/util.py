@@ -1,7 +1,62 @@
 import os
+import pickle
 import sys
 from collections import defaultdict
 import torch
+import pandas as pd
+import torch.distributed as dist
+
+def gather_dataframes(local_df, device, group=None):
+    """
+    Gather pandas DataFrames from all processes and combine them on rank 0.
+
+    Args:
+        local_df (pd.DataFrame): Local DataFrame on each process.
+        group (optional): Torch distributed process group.
+
+    Returns:
+        pd.DataFrame on rank 0, None elsewhere.
+    """
+
+    # Serialize the DataFrame using pickle
+    serialized = pickle.dumps(local_df)
+    tensor = torch.ByteTensor(list(serialized)).to(device)
+
+    # Gather sizes first
+    local_size = torch.tensor([tensor.numel()], device=device)
+    sizes = [
+        torch.tensor([0], device=device)
+        for _ in range(dist.get_world_size(group))
+    ]
+    dist.all_gather(sizes, local_size, group=group)
+
+    # Pad tensor to max size
+    max_size = max(s.item() for s in sizes)
+    padded = torch.cat(
+        [
+            tensor,
+            torch.zeros(
+                max_size - tensor.numel(), dtype=torch.uint8, device=device
+            ),
+        ]
+    )
+
+    # Gather all padded tensors
+    gathered = [
+        torch.empty(max_size, dtype=torch.uint8, device=device)
+        for _ in range(dist.get_world_size(group))
+    ]
+    dist.all_gather(gathered, padded, group=group)
+
+    if dist.get_rank(group) == 0:
+        dfs = []
+        for t, s in zip(gathered, sizes):
+            raw = bytes(t[: s.item()].tolist())
+            df = pickle.loads(raw)
+            dfs.append(df)
+        return pd.concat(dfs, ignore_index=True)
+
+    return None
 
 def compute_logp(model, state, action):
     model_out = model(**state)

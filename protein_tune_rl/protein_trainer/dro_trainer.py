@@ -53,8 +53,7 @@ class DROTrainer(Trainer):
         self.dataloader = create_dataloader(
             self.dataset, 
             batch_size=self.batch_size, 
-            shuffle=False,
-            #collate_fn=self.collator,
+            shuffle=False
         )
 
         self.policy = create_model(
@@ -112,9 +111,6 @@ class DROTrainer(Trainer):
 
                 self.policy_optimizer.zero_grad()
                 self.value_optimizer.zero_grad()
-
-                # print(batch)
-                # print("")
 
                 tokenized_batch = self.collator(batch)
 
