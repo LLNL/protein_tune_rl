@@ -3,6 +3,7 @@ import re
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
+
 class DROCollator:
     def __init__(
         self,
@@ -10,7 +11,7 @@ class DROCollator:
         eval=False
     ):
         self.tokenizer = tokenizer
-        self.eval=eval
+        self.eval = eval
 
     def create_mask(self, tokenized_sequences, tokenized_completions):
         batch_mask = []
