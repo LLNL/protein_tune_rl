@@ -28,7 +28,7 @@ class ProteinTuneRL:
 
         self.exp_output_dir = Path(self.config['experiment_directory'])
         fixed_output_dir = self.config.pop('fixed_experiment_directory', False)
-        
+
         try:
             if mode == "tune":
                 if not fixed_output_dir:
@@ -40,13 +40,11 @@ class ProteinTuneRL:
                     if 'learning_rate' in self.config['trainer']:
                         lr = self.config['trainer']['learning_rate']
                     else:
-                        lr = self.config['optimizer']['learning_rate']                    
+                        lr = self.config['optimizer']['learning_rate']
                     if 'tau' in self.config['trainer']:
                         tau = self.config['trainer']['tau']
                     elif 'tau' in self.config['optimizer']:
                         tau = self.config['optimizer']['tau']
-
-
 
                     exp_output_dir = (
                         self.config['trainer']['name']
@@ -59,11 +57,10 @@ class ProteinTuneRL:
                         + str(self.config['trainer']['batch_size'])
                         + '_lr_'
                         + str(lr)
-                        
                     )
 
                     if tau is not None:
-                        exp_output_dir += '_tau_'+ str(tau)
+                        exp_output_dir += f'_tau_{str(tau)}'
 
                 self.protein_tuner = create_trainer(self.config['trainer']['name'])(
                     self.config
@@ -93,12 +90,12 @@ class ProteinTuneRL:
             with open(self.exp_output_dir / 'config.json', "w") as outfile:
                 json.dump(self.config, outfile)
 
-        logger.info("Initialized ProtTuneRL")
+        logger.info("Initialized ProteinTuneRL")
 
     def tune(self):
-        logger.info("Starting ProtTuneRL")
+        logger.info("Starting ProteinTuneRL")
         self.protein_tuner.run(self.exp_output_dir)
-        logger.info("Finished ProtTuneRL")
+        logger.info("Finished ProteinTuneRL")
 
 
 #######################################################################
@@ -120,11 +117,10 @@ def experiment(rank, config_file, runs, mode, num_procs):
         torch.cuda.set_device(device_id)
 
     logger.set_rank(rank)
-    logger.info("Running ProteinTuneRL Experiment")
-    logger.info(f"Total runs: {runs}")
+    logger.info("Running ProteinTuneRL experiment")
 
     for run in range(runs):
-        logger.info(f"Run {run}")
+        logger.info(f"Run {run + 1}/{runs} - Rank {rank} - Mode: {mode}")
         torch.manual_seed(run)
         np.random.seed(run)
         ProteinTuneRL(config_file, mode).tune()
