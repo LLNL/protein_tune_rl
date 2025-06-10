@@ -26,6 +26,10 @@ class ProteinTuneRL:
         with open(config) as f:
             self.config = json.load(f)
 
+        logger.info(f"Loaded config file: {config}")
+        if mode not in ["tune", "eval"]:
+            raise ValueError(f"Mode {mode} is not supported. Use 'tune' or 'eval'.")
+
         self.exp_output_dir = Path(self.config['experiment_directory'])
         fixed_output_dir = self.config.pop('fixed_experiment_directory', False)
 
@@ -84,7 +88,7 @@ class ProteinTuneRL:
                     self.exp_output_dir /= exp_output_dir
                 self.exp_output_dir.mkdir(parents=True, exist_ok=True)
         except Exception as e:
-            raise logger.error(f"Error: {e}") from e
+            raise logger.error(f"Failed to initialize ProteinTuneRL: Error {e}") from e
 
         if dist.get_rank() == 0:
             with open(self.exp_output_dir / 'config.json', "w") as outfile:
