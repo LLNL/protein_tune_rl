@@ -1,10 +1,10 @@
 import os
 import pickle
 import sys
-from collections import defaultdict
 import torch
 import pandas as pd
 import torch.distributed as dist
+
 
 def gather_dataframes(local_df, device, group=None):
     """
@@ -25,8 +25,7 @@ def gather_dataframes(local_df, device, group=None):
     # Gather sizes first
     local_size = torch.tensor([tensor.numel()], device=device)
     sizes = [
-        torch.tensor([0], device=device)
-        for _ in range(dist.get_world_size(group))
+        torch.tensor([0], device=device) for _ in range(dist.get_world_size(group))
     ]
     dist.all_gather(sizes, local_size, group=group)
 
@@ -35,9 +34,7 @@ def gather_dataframes(local_df, device, group=None):
     padded = torch.cat(
         [
             tensor,
-            torch.zeros(
-                max_size - tensor.numel(), dtype=torch.uint8, device=device
-            ),
+            torch.zeros(max_size - tensor.numel(), dtype=torch.uint8, device=device),
         ]
     )
 
@@ -57,6 +54,7 @@ def gather_dataframes(local_df, device, group=None):
         return pd.concat(dfs, ignore_index=True)
 
     return None
+
 
 def compute_logp(model, state, action):
     model_out = model(**state)

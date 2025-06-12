@@ -25,20 +25,19 @@ class KLPenalty:
         self.K_b = 0.1
         self.target = target
 
-        if device == None:
+        if device is None:
             self.device = torch.device("cpu")
         else:
             self.device = device
-        
 
     def __call__(self, logp, sequences):
         init_size = sequences["init_size"]
         state = {
-                "input_ids" : sequences["input_ids"].to(self.device), 
-                "attention_mask" : sequences["attention_mask"].to(self.device), 
-                "position_ids" : sequences["position_ids"].to(self.device)
-                }
-        
+            "input_ids": sequences["input_ids"].to(self.device),
+            "attention_mask": sequences["attention_mask"].to(self.device),
+            "position_ids": sequences["position_ids"].to(self.device),
+        }
+
         action = state["input_ids"][:, init_size:].detach()
 
         with torch.no_grad():
@@ -69,12 +68,8 @@ class OnlineRLSampler:
 
         tokenizer = create_tokenizer(name="iglm_tokenizer", **config['tokenizer'])
         self.tokenizer = tokenizer
-        
 
-        self.collator = create_collator(
-            name="infilling",
-            tokenizer=self.tokenizer
-        )
+        self.collator = create_collator(name="infilling", tokenizer=self.tokenizer)
 
         self.dataloader = create_dataloader(
             self.dataset,
@@ -141,7 +136,9 @@ class OnlineRLSampler:
         for i, ids in enumerate(infilled_ids):
             terminal_idx = (ids == self.stop_token_id).nonzero()
             if len(terminal_idx) > 0:
-                infilled_seq = self.tokenizer.tokenizer.decode(ids[: terminal_idx[0, 0]])
+                infilled_seq = self.tokenizer.tokenizer.decode(
+                    ids[: terminal_idx[0, 0]]
+                )
             else:
                 infilled_seq = self.tokenizer.tokenizer.decode(ids)
             infilled_seq = infilled_seq.replace(" ", "")
@@ -158,10 +155,10 @@ class OnlineRLSampler:
 
     def _sample_batch(self, model, init_sequences):
         model_input = {
-                        "input_ids" : init_sequences["input_ids"].to(self.device), 
-                        "attention_mask" : init_sequences["attention_mask"].to(self.device), 
-                        "position_ids" : init_sequences["position_ids"].to(self.device)
-                        }
+            "input_ids": init_sequences["input_ids"].to(self.device),
+            "attention_mask": init_sequences["attention_mask"].to(self.device),
+            "position_ids": init_sequences["position_ids"].to(self.device),
+        }
         logp_sum = torch.zeros(len(model_input["input_ids"]), device=self.device)
         entropy_sum = torch.zeros(len(model_input["input_ids"]), device=self.device)
         finished = torch.zeros_like(logp_sum, dtype=torch.bool, device=self.device)
@@ -224,7 +221,9 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
             ).to(self.device)
             self.ref_model.eval()
             self.ref_model = DDP(self.ref_model, device_ids=self.device_ids)
-            self.KL_penalty = KLPenalty(self.ref_model, **config["KL_penalty"], device=self.device)
+            self.KL_penalty = KLPenalty(
+                self.ref_model, **config["KL_penalty"], device=self.device
+            )
 
         self.optimizer = create_optimizer(
             name=config["optimizer"].pop("name"),
@@ -243,7 +242,9 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
         while current_step < self.total_optimization_steps:
             for batch_number, batch in enumerate(iter(self.dataloader)):
                 tokenized_batch = self.collator(batch)
-                sampled_seqs, logp, entropy = self._sample_batch(self.model, tokenized_batch)
+                sampled_seqs, logp, entropy = self._sample_batch(
+                    self.model, tokenized_batch
+                )
 
                 reward = torch.zeros(len(sampled_seqs))
                 for i, seq in enumerate(sampled_seqs):

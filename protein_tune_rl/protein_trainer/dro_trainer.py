@@ -51,9 +51,7 @@ class DROTrainer(Trainer):
         )
 
         self.dataloader = create_dataloader(
-            self.dataset, 
-            batch_size=self.batch_size, 
-            shuffle=False
+            self.dataset, batch_size=self.batch_size, shuffle=False
         )
 
         self.policy = create_model(

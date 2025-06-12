@@ -1,5 +1,3 @@
-import pickle
-
 import pandas as pd
 import torch
 import torch.distributed as dist
@@ -20,9 +18,9 @@ class IGLMEvaluator(Evaluator):
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.batch_size = self.config["evaluator"]["batch_size"]
-        if self.batch_size != 1: 
+        if self.batch_size != 1:
             raise ValueError("Only batch size of 1 currently supported for evaluation.")
-        
+
         self.model_name = self.config["evaluator"]["model_name"]
         self.num_to_generate = self.config["generator"]["num_to_generate"]
         self.top_p = self.config["generator"]["top_p"]
@@ -37,24 +35,18 @@ class IGLMEvaluator(Evaluator):
             region=self.config["dataset"]["region"],
         )
 
-        
         self.tokenizer = create_tokenizer(
             name=self.config['tokenizer']['name'],
             tokenizer_config=self.config['tokenizer']['tokenizer_config'],
-            padding_side=self.config['tokenizer']['padding_side']
+            padding_side=self.config['tokenizer']['padding_side'],
         )
 
         self.collator = create_collator(
-            name=self.config['collator']['name'],
-            tokenizer=self.tokenizer,
-            eval=True
+            name=self.config['collator']['name'], tokenizer=self.tokenizer, eval=True
         )
 
-
         self.dataloader = create_dataloader(
-            self.dataset, 
-            batch_size=self.batch_size, 
-            shuffle=True
+            self.dataset, batch_size=self.batch_size, shuffle=True
         )
 
         self.policy = create_model(
@@ -65,7 +57,8 @@ class IGLMEvaluator(Evaluator):
 
         self.metric_function = []
         self.metric_function.extend(
-            create_metric(name=metric["name"])(**metric["params"]) for metric in self.config['metric']
+            create_metric(name=metric["name"])(**metric["params"])
+            for metric in self.config['metric']
         )
 
     def generate(
@@ -99,7 +92,7 @@ class IGLMEvaluator(Evaluator):
                 self.tokenizer.tokenizer.convert_ids_to_tokens([next_token][0])
                 for next_token in tokens.tolist()
             ][2:-1]
-            
+
             decoded_infill = "".join(
                 decoded_sequence[decoded_sequence.index("[SEP]") + 1 :]
             )
@@ -108,7 +101,7 @@ class IGLMEvaluator(Evaluator):
                 decoded_sequence[: decoded_sequence.index("[SEP]")]
             )
             decoded_sequence = decoded_sequence.replace("[MASK]", decoded_infill)
-            
+
             decoded_sequences.append(decoded_sequence)
             decoded_infills.append(decoded_infill)
 
@@ -117,7 +110,13 @@ class IGLMEvaluator(Evaluator):
     def run(self, output_dir):
 
         eval_df = pd.DataFrame()
-        prompts, scores, generated_sequences, heavy_chains, light_chains = [], [], [], [], []
+        prompts, scores, generated_sequences, heavy_chains, light_chains = (
+            [],
+            [],
+            [],
+            [],
+            [],
+        )
 
         for batch_number, batch in enumerate(iter(self.dataloader)):
             self.policy.eval()
@@ -136,15 +135,17 @@ class IGLMEvaluator(Evaluator):
                     self.bad_word_ids,
                 )
 
-                for full_sampled_sequence, infilled_sequence in zip(full_sampled_sequences, infilled_sequences):
+                for full_sampled_sequence, infilled_sequence in zip(
+                    full_sampled_sequences, infilled_sequences
+                ):
 
                     chains = {
-                            "L": batch["LC"][idx], 
-                            "H": full_sampled_sequence, 
-                            "seq_pre_mask" : tokenized_batch["seq_pre_mask"], 
-                            "seq_post_mask" : tokenized_batch["seq_post_mask"]
-                             }
-                    
+                        "L": batch["LC"][idx],
+                        "H": full_sampled_sequence,
+                        "seq_pre_mask": tokenized_batch["seq_pre_mask"],
+                        "seq_post_mask": tokenized_batch["seq_post_mask"],
+                    }
+
                     # score the sequence under some eval function (SASA)
                     try:
                         score = [
@@ -162,15 +163,21 @@ class IGLMEvaluator(Evaluator):
                     generated_sequences.append(infilled_sequence)
                     heavy_chains.append(full_sampled_sequence)
                     light_chains.append(batch["LC"][idx])
-                    prompts.append(tokenized_batch["seq_pre_mask"][0] + "[MASK]" + tokenized_batch["seq_post_mask"][0])
+                    prompts.append(
+                        tokenized_batch["seq_pre_mask"][0]
+                        + "[MASK]"
+                        + tokenized_batch["seq_post_mask"][0]
+                    )
 
         eval_df['completion'] = generated_sequences
         eval_df['HC'] = heavy_chains
         eval_df['LC'] = light_chains
         eval_df['prompts'] = prompts
-        
+
         for idx, metric in enumerate(self.config['metric']):
-            eval_df[str(metric['name'])] = [metric_score[idx] for metric_score in scores]
+            eval_df[str(metric['name'])] = [
+                metric_score[idx] for metric_score in scores
+            ]
 
         final_df = gather_dataframes(eval_df, device=self.device)
 
@@ -178,5 +185,3 @@ class IGLMEvaluator(Evaluator):
             final_df.to_csv(f"{output_dir}/{self.model_name}_eval.csv")
 
         return final_df
-
-    

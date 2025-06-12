@@ -15,8 +15,7 @@ def create_metric(name):
         return SASA
 
     if name == "folding_confidence":
-        from protein_tune_rl.metrics.folding_confidence import \
-            FoldingConfidence
+        from protein_tune_rl.metrics.folding_confidence import FoldingConfidence
 
         return FoldingConfidence
 

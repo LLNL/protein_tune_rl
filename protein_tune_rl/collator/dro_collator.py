@@ -5,11 +5,7 @@ from torch.nn.utils.rnn import pad_sequence
 
 
 class DROCollator:
-    def __init__(
-        self,
-        tokenizer,
-        eval=False
-    ):
+    def __init__(self, tokenizer, eval=False):
         self.tokenizer = tokenizer
         self.eval = eval
 
@@ -46,11 +42,16 @@ class DROCollator:
         input_completions = self._pad_ragged_tensors(tokenized_completions)
         input_mask = self._pad_ragged_tensors(mask)
         return input_sequences, input_completions, input_mask
-    
 
     def __call__(self, batch):
-        
-        masked_prompts, masked_prompts_with_completions, spaced_completions, sequences_pre_mask, sequences_post_mask = (
+
+        (
+            masked_prompts,
+            masked_prompts_with_completions,
+            spaced_completions,
+            sequences_pre_mask,
+            sequences_post_mask,
+        ) = (
             [],
             [],
             [],
@@ -67,7 +68,6 @@ class DROCollator:
             )
             spaced_completions.append(" ".join(completion) + "[CLS]")
 
-            
             masked_region_idx = re.search(completion, prompt)
             seq_pre_mask = prompt[: masked_region_idx.start()]
             seq_post_mask = prompt[masked_region_idx.end() :]
@@ -114,8 +114,8 @@ class DROCollator:
                 "prompts": tokenized_masked_prompts,
                 "labels": input_mask,
                 "LC": batch["LC"],
-                "seq_pre_mask" : sequences_pre_mask,
-                "seq_post_mask" : sequences_post_mask
+                "seq_pre_mask": sequences_pre_mask,
+                "seq_post_mask": sequences_post_mask,
             }
 
         return {
@@ -123,6 +123,6 @@ class DROCollator:
             "prompts": tokenized_masked_prompts,
             "labels": input_mask,
             "rewards": batch["rewards"],
-            "seq_pre_mask" : sequences_pre_mask,
-            "seq_post_mask" : sequences_post_mask
+            "seq_pre_mask": sequences_pre_mask,
+            "seq_post_mask": sequences_post_mask,
         }

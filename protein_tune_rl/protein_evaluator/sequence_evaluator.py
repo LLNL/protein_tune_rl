@@ -31,7 +31,8 @@ class SequenceEvaluator(Evaluator):
 
         self.metric_function = []
         self.metric_function.extend(
-            create_metric(name=metric["name"])(**metric["params"]) for metric in self.config['metric']
+            create_metric(name=metric["name"])(**metric["params"])
+            for metric in self.config['metric']
         )
 
     def run(self, output_dir):
@@ -40,14 +41,14 @@ class SequenceEvaluator(Evaluator):
         scores, heavy_chains, light_chains = [], [], []
 
         for batch_number, batch in enumerate(iter(self.dataloader)):
-            
+
             for sequence, LC in zip(batch['prompts'], batch["LC"]):
 
                 chains = {
-                        "L": LC, 
-                        "H": sequence, 
-                            }
-                
+                    "L": LC,
+                    "H": sequence,
+                }
+
                 # score the sequence under some eval function (SASA)
                 try:
                     score = [
@@ -67,9 +68,11 @@ class SequenceEvaluator(Evaluator):
 
         eval_df['HC'] = heavy_chains
         eval_df['LC'] = light_chains
-        
+
         for idx, metric in enumerate(self.config['metric']):
-            eval_df[str(metric['name'])] = [metric_score[idx] for metric_score in scores]
+            eval_df[str(metric['name'])] = [
+                metric_score[idx] for metric_score in scores
+            ]
 
         final_df = self.gather_dataframes(eval_df)
 

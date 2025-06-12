@@ -12,13 +12,9 @@ class InfillingDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-    
+
         return {
-                "prompts": self.data[self.chain].iloc[idx],
-                "region": self.data[self.region].iloc[idx],
-                "LC": self.data.LC.iloc[idx],
+            "prompts": self.data[self.chain].iloc[idx],
+            "region": self.data[self.region].iloc[idx],
+            "LC": self.data.LC.iloc[idx],
         }
-
-
-
-

@@ -69,11 +69,11 @@ class PPO:
             state_value = StateValue(model, "value_function")
             state_value.eval()
             state_value.to(self.device)
-            if torch.cuda.is_available():                
+            if torch.cuda.is_available():
                 self.state_value = DDP(state_value, device_ids=[self.device])
-            else:                
+            else:
                 self.state_value = DDP(state_value)
-            
+
             self.value_optimizer = Adam(
                 self.state_value.parameters(), lr=learning_rate, eps=1e-5
             )
@@ -91,10 +91,10 @@ class PPO:
         init_size = batch["init_size"]
         action = batch["input_ids"][:, init_size:].to(self.device).detach()
         state = {
-                 "input_ids" : batch["input_ids"].to(self.device), 
-                 "attention_mask" : batch["attention_mask"].to(self.device), 
-                 "position_ids" : batch["position_ids"].to(self.device)
-                }
+            "input_ids": batch["input_ids"].to(self.device),
+            "attention_mask": batch["attention_mask"].to(self.device),
+            "position_ids": batch["position_ids"].to(self.device),
+        }
 
         old_logp = logp.detach()
 
@@ -103,7 +103,7 @@ class PPO:
             adv = reward - r_mean
         elif self.baseline == "state_value":
             value = self.state_value(**state)
-            adv = reward - value.detach()            
+            adv = reward - value.detach()
 
         if self.normalize_adv:
             if self.baseline == "mean":

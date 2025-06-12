@@ -1,6 +1,3 @@
-import pandas as pd
-from torch.utils.data import Dataset
-
 from protein_tune_rl.dataset.infilling_dataset import InfillingDataset
 
 
@@ -8,7 +5,6 @@ class DRODataset(InfillingDataset):
     def __init__(self, data_directory, chain, region, reward):
         super().__init__(data_directory, chain, region)
         self.reward = reward
-
 
     def __getitem__(self, idx):
 

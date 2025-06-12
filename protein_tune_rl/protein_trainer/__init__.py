@@ -17,8 +17,7 @@ def create_trainer(name):
         return DROTrainer
 
     if name == "online_rl_trainer":
-        from protein_tune_rl.protein_trainer.online_rl_trainer import \
-            OnlineRLTrainer
+        from protein_tune_rl.protein_trainer.online_rl_trainer import OnlineRLTrainer
 
         return OnlineRLTrainer
 
