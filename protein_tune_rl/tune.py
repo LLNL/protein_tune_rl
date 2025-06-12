@@ -142,11 +142,16 @@ def experiment(rank, config_file, runs, mode, num_procs):
 @click.option("-mode", "--mode", type=str, default="tune")
 @click.option("-np", "--num-procs", type=int, default=-1)
 def main(config_file, runs, mode, num_procs):
-    try:  # multi-node
-        rank = int(os.environ['JSM_NAMESPACE_RANK'])
-        num_procs = int(os.environ['JSM_NAMESPACE_SIZE'])
+    # Try multi-node first — safe to fall back if not present
+    jsm_rank = os.environ.get("JSM_NAMESPACE_RANK")
+    jsm_size = os.environ.get("JSM_NAMESPACE_SIZE")
+    if jsm_rank is not None and jsm_size is not None:
+        # Multi-node (e.g. launched via jsrun)
+        rank = int(jsm_rank)
+        num_procs = int(jsm_size)
         experiment(rank, config_file, runs, mode, num_procs)
-    except KeyError:  # single-node
+    else:
+        # Single-node fallback
         os.environ["MASTER_ADDR"] = "localhost"
         if num_procs == -1:
             num_procs = torch.cuda.device_count()
