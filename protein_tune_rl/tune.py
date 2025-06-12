@@ -88,7 +88,9 @@ class ProteinTuneRL:
                     self.exp_output_dir /= exp_output_dir
                 self.exp_output_dir.mkdir(parents=True, exist_ok=True)
         except Exception as e:
-            raise logger.error(f"Failed to initialize ProteinTuneRL: Error {e}") from e
+            raise logger.error(
+                f"Failed to initialize ProteinTuneRL. Error : {e}"
+            ) from e
 
         if dist.get_rank() == 0:
             with open(self.exp_output_dir / 'config.json', "w") as outfile:
