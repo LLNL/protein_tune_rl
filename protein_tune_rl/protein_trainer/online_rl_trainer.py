@@ -198,6 +198,10 @@ class OnlineRLSampler:
 
         sampled_seq = self._decode(samples, init_sequences)
 
+        init_sequences["input_ids"] = model_input["input_ids"]
+        init_sequences["attention_mask"] = model_input["attention_mask"]
+        init_sequences["position_ids"] = model_input["position_ids"]
+
         return sampled_seq, logp_sum, entropy_sum
 
 
