@@ -18,8 +18,7 @@ class ParallelLogger:
 
             # Use datefmt for uniform timestamps
             formatter = logging.Formatter(
-                "ptrl %(asctime)s - %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S"
+                "ptrl %(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
             )
             ch.setFormatter(formatter)
             self.logger.addHandler(ch)
@@ -30,7 +29,7 @@ class ParallelLogger:
         self.is_root = False
 
     def set_rank(self, rank):
-        self.is_root = (rank == 0)
+        self.is_root = rank == 0
 
     def info(self, msg):
         if self.is_root:
