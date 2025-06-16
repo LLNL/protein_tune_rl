@@ -1,12 +1,17 @@
-def create_collator(name, model_name=None, tokenizer=None, **kwargs):
-    if name == "dro":
-        from protein_tune_rl.collator.dro_collator import DROCollator
+def create_collator(name, tokenizer, eval=False):
+    try:
+        if name == "dro_infilling":
+            from protein_tune_rl.collator.dro_collator import DROCollator
 
-        return DROCollator(model_name=model_name, tokenizer=tokenizer)
+            return DROCollator(tokenizer=tokenizer, eval=eval)
 
-    if name == "infilling":
-        from protein_tune_rl.collator.infilling_data_collator import (
-            InfillingDataCollator,
-        )
+        if name == "infilling":
+            from protein_tune_rl.collator.infilling_data_collator import (
+                InfillingCollator,
+            )
 
-        return InfillingDataCollator(tokenizer=tokenizer, **kwargs)
+            return InfillingCollator(tokenizer=tokenizer)
+
+        raise ValueError(f"Unknown collator name: {name}")
+    except Exception as e:
+        raise RuntimeError(f"Failed to create collator '{name}': {e}") from e

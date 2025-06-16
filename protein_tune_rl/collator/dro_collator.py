@@ -1,15 +1,13 @@
+import re
+
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
 
 class DROCollator:
-    def __init__(
-        self,
-        model_name,
-        tokenizer,
-    ):
-        self.model_name = model_name
+    def __init__(self, tokenizer, eval=False):
         self.tokenizer = tokenizer
+        self.eval = eval
 
     def create_mask(self, tokenized_sequences, tokenized_completions):
         batch_mask = []
@@ -45,20 +43,34 @@ class DROCollator:
         input_mask = self._pad_ragged_tensors(mask)
         return input_sequences, input_completions, input_mask
 
-    def __call__(self, batch, eval=False):
+    def __call__(self, batch):
 
-        masked_prompts, masked_prompts_with_completions, spaced_completions = (
+        (
+            masked_prompts,
+            masked_prompts_with_completions,
+            spaced_completions,
+            sequences_pre_mask,
+            sequences_post_mask,
+        ) = (
+            [],
+            [],
             [],
             [],
             [],
         )
+
         # NOTE: In cases where a given completion pattern occurs in multiple different spans for a given prompt
         # this code will insert multiple masks. This code should be changed to handle such scenarios in the future.
         for prompt, completion in zip(batch["prompts"], batch["completions"]):
+
             masked_prompt = ' '.join(prompt).replace(
                 ' '.join(str(completion)), "[MASK]"
             )
             spaced_completions.append(" ".join(completion) + "[CLS]")
+
+            masked_region_idx = re.search(completion, prompt)
+            seq_pre_mask = prompt[: masked_region_idx.start()]
+            seq_post_mask = prompt[masked_region_idx.end() :]
 
             prompt = (
                 "[HEAVY]"
@@ -74,7 +86,7 @@ class DROCollator:
                 + "[CLS]"
             )
 
-            if eval:
+            if self.eval:
                 prompt = (
                     '[HEAVY]' + " " + "[HUMAN]" + " " + masked_prompt + " " + "[SEP]"
                 )
@@ -83,6 +95,9 @@ class DROCollator:
             masked_prompts.append(
                 "[HEAVY]" + " " + "[HUMAN]" + " " + masked_prompt + " " + "[SEP]"
             )
+
+            sequences_pre_mask.append(seq_pre_mask)
+            sequences_post_mask.append(seq_post_mask)
 
         (
             tokenized_masked_prompts_with_completions,
@@ -93,12 +108,14 @@ class DROCollator:
             masked_prompts, spaced_completions
         )
 
-        if eval:
+        if self.eval:
             return {
                 "input_ids": tokenized_masked_prompts_with_completions,
                 "prompts": tokenized_masked_prompts,
                 "labels": input_mask,
                 "LC": batch["LC"],
+                "seq_pre_mask": sequences_pre_mask,
+                "seq_post_mask": sequences_post_mask,
             }
 
         return {
@@ -106,4 +123,6 @@ class DROCollator:
             "prompts": tokenized_masked_prompts,
             "labels": input_mask,
             "rewards": batch["rewards"],
+            "seq_pre_mask": sequences_pre_mask,
+            "seq_post_mask": sequences_post_mask,
         }

@@ -19,15 +19,25 @@ from protein_tune_rl.util.util import compute_logp
 
 
 class KLPenalty:
-    def __init__(self, ref_model, weight, target):
+    def __init__(self, ref_model, weight, target, device=None):
         self.ref_model = ref_model
         self.beta = weight
         self.K_b = 0.1
         self.target = target
 
+        if device is None:
+            self.device = torch.device("cpu")
+        else:
+            self.device = device
+
     def __call__(self, logp, sequences):
         init_size = sequences["init_size"]
-        state = sequences["model_input"]
+        state = {
+            "input_ids": sequences["input_ids"].to(self.device),
+            "attention_mask": sequences["attention_mask"].to(self.device),
+            "position_ids": sequences["position_ids"].to(self.device),
+        }
+
         action = state["input_ids"][:, init_size:].detach()
 
         with torch.no_grad():
@@ -52,23 +62,19 @@ class OnlineRLSampler:
         self.dataset = create_dataset(
             name=config['dataset']['name'],
             data_directory=config['dataset']['data_directory'],
+            chain=config["dataset"]["chain"],
+            region=config["dataset"]["region"],
         )
 
         tokenizer = create_tokenizer(name="iglm_tokenizer", **config['tokenizer'])
-        self.tokenizer = tokenizer.tokenizer
+        self.tokenizer = tokenizer
 
-        self.collator = create_collator(
-            name="infilling",
-            model_name='gpt2',
-            tokenizer=self.tokenizer,
-            **config["collator"],
-        )
+        self.collator = create_collator(name="infilling", tokenizer=self.tokenizer)
 
         self.dataloader = create_dataloader(
             self.dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            collate_fn=self.collator,
         )
 
         if torch.cuda.is_available():
@@ -95,7 +101,7 @@ class OnlineRLSampler:
 
     @cached_property
     def _constrained_ids(self):
-        return self.tokenizer.convert_tokens_to_ids(
+        return self.tokenizer.tokenizer.convert_tokens_to_ids(
             [
                 "[PAD]",
                 "[UNK]",
@@ -130,9 +136,11 @@ class OnlineRLSampler:
         for i, ids in enumerate(infilled_ids):
             terminal_idx = (ids == self.stop_token_id).nonzero()
             if len(terminal_idx) > 0:
-                infilled_seq = self.tokenizer.decode(ids[: terminal_idx[0, 0]])
+                infilled_seq = self.tokenizer.tokenizer.decode(
+                    ids[: terminal_idx[0, 0]]
+                )
             else:
-                infilled_seq = self.tokenizer.decode(ids)
+                infilled_seq = self.tokenizer.tokenizer.decode(ids)
             infilled_seq = infilled_seq.replace(" ", "")
 
             seq = (
@@ -146,7 +154,11 @@ class OnlineRLSampler:
         return sampled_seq
 
     def _sample_batch(self, model, init_sequences):
-        model_input = init_sequences["model_input"]
+        model_input = {
+            "input_ids": init_sequences["input_ids"].to(self.device),
+            "attention_mask": init_sequences["attention_mask"].to(self.device),
+            "position_ids": init_sequences["position_ids"].to(self.device),
+        }
         logp_sum = torch.zeros(len(model_input["input_ids"]), device=self.device)
         entropy_sum = torch.zeros(len(model_input["input_ids"]), device=self.device)
         finished = torch.zeros_like(logp_sum, dtype=torch.bool, device=self.device)
@@ -183,6 +195,10 @@ class OnlineRLSampler:
 
         sampled_seq = self._decode(samples, init_sequences)
 
+        init_sequences["input_ids"] = model_input["input_ids"]
+        init_sequences["attention_mask"] = model_input["attention_mask"]
+        init_sequences["position_ids"] = model_input["position_ids"]
+
         return sampled_seq, logp_sum, entropy_sum
 
 
@@ -205,7 +221,9 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
             ).to(self.device)
             self.ref_model.eval()
             self.ref_model = DDP(self.ref_model, device_ids=self.device_ids)
-            self.KL_penalty = KLPenalty(self.ref_model, **config["KL_penalty"])
+            self.KL_penalty = KLPenalty(
+                self.ref_model, **config["KL_penalty"], device=self.device
+            )
 
         self.optimizer = create_optimizer(
             name=config["optimizer"].pop("name"),
@@ -222,12 +240,15 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
         log_df = pd.DataFrame()
         current_step = 0
         while current_step < self.total_optimization_steps:
-            for seqs in self.dataloader:
-                sampled_seqs, logp, entropy = self._sample_batch(self.model, seqs)
+            for batch_number, batch in enumerate(iter(self.dataloader)):
+                tokenized_batch = self.collator(batch)
+                sampled_seqs, logp, entropy = self._sample_batch(
+                    self.model, tokenized_batch
+                )
 
                 reward = torch.zeros(len(sampled_seqs))
                 for i, seq in enumerate(sampled_seqs):
-                    chains = {"L": seqs["LC"][i], "H": seq}
+                    chains = {"L": batch["LC"][i], "H": seq}
                     reward[i] = self.metric(chains)
                 reward = reward.to(logp.device)
 
@@ -236,9 +257,9 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
                 reward_mean /= dist.get_world_size()
 
                 if self.use_KL_penalty:
-                    reward += self.KL_penalty(logp, seqs)
+                    reward += self.KL_penalty(logp, tokenized_batch)
 
-                self.optimizer.step(reward, reward_mean, logp, entropy, seqs)
+                self.optimizer.step(reward, reward_mean, logp, entropy, tokenized_batch)
 
                 reward_mean = reward_mean.cpu().numpy()
                 logger.info(f"step: {current_step}, reward mean: {reward_mean}")

@@ -1,0 +1,43 @@
+
+{
+    "evaluator":
+        {
+            "name" : "dro_value",             
+            "batch_size" : 1024,
+            "model_name" : "dro_value"
+        },
+
+    "dataset" :
+        {
+            "name" : "dro_eval",             
+            "data_directory" : "../data/nos_data/training_data_10k_v3.csv",
+            "chain" : "HC",
+            "region" : "HCDR3"   
+        },
+    
+    "experiment_directory" : "/p/vast1/hayes56/optlm/",
+    
+    "tokenizer" : 
+    {
+            "name" : "iglm_tokenizer",
+            "tokenizer_config" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/value",
+            "padding_side": "right"
+    },
+
+
+    "collator" : 
+    {
+            "name" : "dro"   
+    },
+
+    "value_model" : 
+    {
+        "dir" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/value"
+            
+            
+    }
+
+   
+    
+     
+}

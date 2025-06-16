@@ -11,20 +11,22 @@ class ParallelLogger:
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
-        # create console handler and set level to debug
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
+        # Avoid adding duplicate handlers
+        if not self.logger.handlers:
+            ch = logging.StreamHandler()
+            ch.setLevel(logging.DEBUG)
 
-        # create formatter
-        formatter = logging.Formatter("ptrl %(asctime)s - %(message)s")
+            # Use datefmt for uniform timestamps
+            formatter = logging.Formatter(
+                "ptrl %(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+            )
+            ch.setFormatter(formatter)
+            self.logger.addHandler(ch)
 
-        # add formatter to ch
-        ch.setFormatter(formatter)
+        # Prevent propagation to avoid duplicate logs from the root logger
+        self.logger.propagate = False
 
-        # add ch to logger
-        self.logger.addHandler(ch)
-
-        self.is_root = None
+        self.is_root = False
 
     def set_rank(self, rank):
         self.is_root = rank == 0
@@ -34,7 +36,8 @@ class ParallelLogger:
             self.logger.info(msg)
 
     def error(self, msg):
-        return self.logger.error(msg)
+        # Always log errors, regardless of rank
+        self.logger.error(msg)
 
 
 logger = ParallelLogger()

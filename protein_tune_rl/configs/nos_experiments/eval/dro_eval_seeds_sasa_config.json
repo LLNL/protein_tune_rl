@@ -2,7 +2,7 @@
 {
     "evaluator":
         {
-            "name" : "sasa",            
+            "name" : "sasa",             
             "batch_size" : 1,
             "model_name" : "dro"
         },
@@ -10,7 +10,7 @@
     "dataset" :
         {
             "name" : "dro_eval",             
-            "data_directory" : "../data/nos_data/eval_data_50_v3.csv",
+            "data_directory" : "../data/nos_data/poas_seeds_eval.csv",
             "chain" : "HC",
             "region" : "HCDR3"   
         },
@@ -43,11 +43,8 @@
        
         
         {
-            "name" : "iglm_kl_scoring",
-            "params" : { 
-                        "path" : "/usr/workspace/vaccines/abag_seq/weights/trained/dro/policy",
-                        "reference_path" : "/usr/workspace/vaccines/abag_seq/weights/trained/iglm"
-                        }
+            "name": "prot_gpt2_scoring",
+            "params": { }
         }
     ],
 
@@ -67,7 +64,7 @@
     "generator" : 
 
     {
-        "num_to_generate" : 1, 
+        "num_to_generate" : 10, 
         "top_p" : 1,
         "temperature" :  1,
         "max_length" : 150,

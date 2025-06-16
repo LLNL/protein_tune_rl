@@ -18,7 +18,7 @@
     "dataset" :
         {
             "name" : "dro",             
-            "data_directory" : "../data/nos_data/training_data.csv",
+            "data_directory" : "../data/nos_data/training_data_v3.csv",
             "chain" : "HC",
             "region" : "HCDR3",   
             "reward" : "norm_ss_perc_sheet"   
@@ -27,12 +27,13 @@
     "tokenizer" : 
     {
             "name" : "iglm_tokenizer",
-            "tokenizer_config" : "/usr/workspace/vaccines/abag_seq/weights/trained/iglm"
+            "tokenizer_config" : "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
+            "padding_side": "right"
     },
 
     "collator" : 
     {
-            "name" : "dro"        
+            "name" : "dro_infilling"        
     },
 
     "policy_model" : 

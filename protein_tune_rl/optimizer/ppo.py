@@ -60,16 +60,20 @@ class PPO:
         self.model = model
         self.policy_optimizer = Adam(model.parameters(), lr=learning_rate, eps=1e-5)
 
+        if torch.cuda.is_available():
+            self.device = torch.cuda.current_device()
+        else:
+            self.device = "cpu"
+
         if baseline == "state_value":
             state_value = StateValue(model, "value_function")
             state_value.eval()
+            state_value.to(self.device)
             if torch.cuda.is_available():
-                device_id = torch.cuda.current_device()
-                state_value.to(device_id)
-                self.state_value = DDP(state_value, device_ids=[device_id])
+                self.state_value = DDP(state_value, device_ids=[self.device])
             else:
-                state_value.to("cpu")
                 self.state_value = DDP(state_value)
+
             self.value_optimizer = Adam(
                 self.state_value.parameters(), lr=learning_rate, eps=1e-5
             )
@@ -83,10 +87,14 @@ class PPO:
 
         return -torch.min(surr1, surr2).mean()
 
-    def step(self, reward, baseline, logp, entropy, sequences):
-        init_size = sequences["init_size"]
-        state = sequences["model_input"]
-        action = state["input_ids"][:, init_size:].detach()
+    def step(self, reward, baseline, logp, entropy, batch):
+        init_size = batch["init_size"]
+        action = batch["input_ids"][:, init_size:].to(self.device).detach()
+        state = {
+            "input_ids": batch["input_ids"].to(self.device),
+            "attention_mask": batch["attention_mask"].to(self.device),
+            "position_ids": batch["position_ids"].to(self.device),
+        }
 
         old_logp = logp.detach()
 
