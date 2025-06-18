@@ -84,10 +84,12 @@ class OnlineRLSampler:
             self.device_ids = None
             self.device = torch.device("cpu")
 
+        self.attn_impl = config['policy_model'].get('attn_implementation', "eager")
         self.model = create_model(
             name="iglm",
             hf_config=config['policy_model']['path'],
             vocab_size=self.tokenizer.vocab_size,
+            attn_implementation=self.attn_impl,
         ).to(self.device)
         self.model.eval()
         self.model = DDP(self.model, device_ids=self.device_ids)
@@ -225,8 +227,16 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
                 self.ref_model, **config["KL_penalty"], device=self.device
             )
 
+        optimizer_name = config["optimizer"].pop("name")
+        if self.attn_impl == "eager" and optimizer_name == "reinforce":
+            logger.info(
+                "Warning: when the optimizer is 'reinforce', policy_model with"
+                " attn_implementation='eager' can cause RuntimeError during "
+                "gradient computation. Please use a different attn_implementation."
+            )
+
         self.optimizer = create_optimizer(
-            name=config["optimizer"].pop("name"),
+            name=optimizer_name,
             model=self.model,
             **config["optimizer"],
         )
