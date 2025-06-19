@@ -4,8 +4,10 @@ import torch
 
 
 class LanguageModelScoring:
-    def __init__(self, model, pad_token='<|pad|>'):
-        self.tokenizer, self.pad_id = self.init_tokenizer(model, pad_token)
+    def __init__(self, model, tokenizer=None, pad_token='<|pad|>'):
+        if tokenizer is None:
+            tokenizer = model
+        self.tokenizer, self.pad_id = self.init_tokenizer(tokenizer, pad_token)
 
         if torch.cuda.is_available():
             self.device = torch.device("cuda", torch.cuda.current_device())
@@ -16,7 +18,7 @@ class LanguageModelScoring:
         model = model.to(self.device)
         self.model = model.eval()
 
-    def init_tokenizer(self, model, pad_token):
+    def init_tokenizer(self, tokenizer, pad_token):
         raise NotImplementedError
 
     def init_model(self, model):

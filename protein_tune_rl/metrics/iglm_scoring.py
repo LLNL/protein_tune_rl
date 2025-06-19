@@ -12,15 +12,15 @@ def exists(x):
 
 
 class IgLMScoring(LanguageModelScoring):
-    def __init__(self, path):
-        super().__init__(path, pad_token='[PAD]')
+    def __init__(self, model, tokenizer):
+        super().__init__(model, tokenizer=tokenizer, pad_token='[PAD]')
 
-    def init_tokenizer(self, model, pad_token):
+    def init_tokenizer(self, tokenizer, pad_token):
         """
         Loads the tokenizer from the given model path and adds the pad token.
         """
         tokenizer = create_tokenizer(
-            name="iglm_tokenizer", tokenizer_config=model, padding_side="right"
+            name="iglm_tokenizer", tokenizer_config=tokenizer, padding_side="right"
         )
         return tokenizer, tokenizer.pad_token_id
 

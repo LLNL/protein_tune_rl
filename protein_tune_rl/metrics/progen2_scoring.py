@@ -9,8 +9,8 @@ class ProGen2Scoring(LanguageModelScoring):
     def __init__(self, model="hugohrban/progen2-small"):
         super().__init__(model, pad_token='<|pad|>')
 
-    def init_tokenizer(self, model, pad_token):
-        tokenizer = Tokenizer.from_pretrained(model)
+    def init_tokenizer(self, tokenizer, pad_token):
+        tokenizer = Tokenizer.from_pretrained(tokenizer)
         tokenizer.enable_padding(pad_token=pad_token)
         pad_id = tokenizer.token_to_id(pad_token)
         return tokenizer, pad_id

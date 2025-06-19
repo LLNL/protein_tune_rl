@@ -45,7 +45,9 @@
         },
         {
             "name": "prot_gpt2_scoring",
-            "params": { }
+            "params": {
+                "model": "/usr/workspace/vaccines/abag_seq/weights/pretrained/protgpt2"
+            }
         },
         {
             "name": "progen2_scoring",
