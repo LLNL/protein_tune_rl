@@ -80,16 +80,20 @@ def main():
 
     metric_params = { }
     if args.reward == "sasa" or args.reward == "folding_confidence":
-        metric_params = {
-            "folding_tool": "igfold",
-            "options":
-            {
-                "num_models": 1,
-                "do_refine": False,
-                "use_openmm": True,
-                "do_renum": False
-            }
+        metric_params["folding_tool"] = "igfold"
+        metric_params["options"] = {
+            "num_models": 1,
+            "do_refine": False,
+            "use_openmm": True,
+            "do_renum": False
         }
+
+    if args.reward == "sasa":
+        metric_params["mean"] = 11059.921829543871
+        metric_params["std"] = 283.3540114234261
+    elif args.reward == "beta_sheet":
+        metric_params["mean"] = 0.3784639359426365
+        metric_params["std"] = 0.017445864484741506
 
     train_config = generate_common(args.reward, metric_params, "trainer")
     
