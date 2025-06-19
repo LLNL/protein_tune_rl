@@ -4,14 +4,12 @@ from protein_tune_rl.metrics.lm_scoring import LanguageModelScoring
 
 
 class ProtGPT2Scoring(LanguageModelScoring):
-    def __init__(
-        self, path="/usr/workspace/vaccines/abag_seq/weights/pretrained/protgpt2"
-    ):
-        super().__init__(path, pad_token='[PAD]')
+    def __init__(self, model="nferruz/ProtGPT2"):
+        super().__init__(model, pad_token='[PAD]')
         self.newline_distance = 60
 
-    def init_tokenizer(self, model, pad_token):
-        tokenizer = AutoTokenizer.from_pretrained(model)
+    def init_tokenizer(self, tokenizer, pad_token):
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer)
         tokenizer.add_special_tokens({'pad_token': pad_token})
         pad_id = tokenizer.convert_tokens_to_ids(pad_token)
         return tokenizer, pad_id

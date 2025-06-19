@@ -3,7 +3,7 @@ from protein_tune_rl.metrics.iglm_scoring import IgLMScoring
 
 
 class IgLMKLScoring:
-    def __init__(self, path, ref_path):
+    def __init__(self, model, ref_model, tokenizer):
         """
         Parameters
         ----------
@@ -14,10 +14,10 @@ class IgLMKLScoring:
         """
 
         # Initialize the primary model
-        self.primary_IgLMScoring = IgLMScoring(path)
+        self.primary_IgLMScoring = IgLMScoring(model, tokenizer)
 
         # Initialize the reference model
-        self.reference_IgLMScoring = IgLMScoring(ref_path)
+        self.reference_IgLMScoring = IgLMScoring(ref_model, tokenizer)
 
     def __call__(self, chains: Dict):
         """

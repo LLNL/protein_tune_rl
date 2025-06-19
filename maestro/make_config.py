@@ -48,8 +48,7 @@ def generate_common(metric, metric_params, tuner_type):
 
         "tokenizer":
         {
-            "vocab_file": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
-            "do_lower_case": False,
+            "tokenizer_config": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
             "padding_side": "left"
         },
 
@@ -118,11 +117,21 @@ def main():
     eval_config["experiment_directory"] =  "output/ref"
     eval_config["metric"].append({
         "name": "prot_gpt2_scoring",
-        "params": { }
+        "params": {
+            "model": "/usr/workspace/vaccines/abag_seq/weights/pretrained/protgpt2"
+        }
     })
     eval_config["metric"].append({
         "name": "progen2_scoring",
         "params": { }
+    })
+    eval_config["metric"].append({
+        "name": "iglm_kl_scoring",
+        "params": {
+            "model": "models/final",
+            "ref_model": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
+            "tokenizer": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm"
+        }
     })
 
     with open("config_eval_ref.json", "w") as f:
