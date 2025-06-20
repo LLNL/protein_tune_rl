@@ -264,7 +264,12 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
                 reward_mean /= dist.get_world_size()
 
                 if self.use_KL_penalty:
-                    reward += self.KL_penalty(logp, tokenized_batch)
+                    KL_penalty = self.KL_penalty(logp, tokenized_batch)
+                    reward += KL_penalty
+                    KL_mean = KL_penalty.mean()
+                    dist.all_reduce(KL_mean, dist.ReduceOp.SUM)
+                    KL_mean /= dist.get_world_size()
+                    logger.info(f"step: {current_step}, KL mean: {KL_mean}")
 
                 self.optimizer.step(reward, reward_mean, logp, entropy, tokenized_batch)
 

@@ -104,3 +104,22 @@ class HidePrints:
     def __exit__(self, exc_type, exc_val, exc_tb):
         sys.stdout.close()
         sys.stdout = self._original_stdout
+
+
+def reduce_mean_across_processes(arg0):
+    dist.all_reduce(arg0, dist.ReduceOp.SUM)
+    arg0 /= dist.get_world_size()
+    return arg0
+
+
+def compute_mean_across_processes(arg0):
+    result = arg0.mean()
+    return reduce_mean_across_processes(result)
+
+
+def normalize_across_processes(arg0):
+    mean = compute_mean_across_processes(arg0)
+    variance = torch.square(arg0.norm(p=2)) / len(arg0) - mean**2
+    variance = reduce_mean_across_processes(variance)
+    std = torch.sqrt(variance)
+    return (arg0 - mean) / (std + 1e-10)
