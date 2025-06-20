@@ -10,7 +10,7 @@
         "total_optimization_steps": 50
     },
 
-    "experiment_directory": "new_log",
+    "experiment_directory": "test_run",
 
     "dataset":
     {

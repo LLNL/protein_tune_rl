@@ -2,14 +2,14 @@
 {
     "evaluator":
     {
-        "name": "ss_perc_sheet",
+        "name": "iglm",
         "model_name" : "iglm",
         "batch_size": 5,
         "max_length": 22,
         "use_cuda": true
     },
 
-    "experiment_directory": "/p/vast1/hayes56/optlm/",
+    "experiment_directory": "test_run",
 
     "dataset":
     {

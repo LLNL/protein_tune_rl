@@ -2,7 +2,7 @@
 {
     "evaluator":
         {
-            "name" : "dro_value",             
+            "name" : "dro_value",
             "batch_size" : 1024,
             "model_name" : "dro_value"
         },
@@ -15,7 +15,7 @@
             "region" : "HCDR3"   
         },
     
-    "experiment_directory" : "/p/vast1/hayes56/optlm/",
+    "experiment_directory" : "test_run",
     
     "tokenizer" : 
     {
