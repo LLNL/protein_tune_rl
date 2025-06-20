@@ -51,7 +51,6 @@ def generate_common(metric, metric_params, tuner_type):
         tuner_type: {
             "batch_size": 8,
             "max_length": 22,
-            "use_cuda": True,
             "check_point_freq": 50,
             "total_optimization_steps": 150,
         },
@@ -59,14 +58,22 @@ def generate_common(metric, metric_params, tuner_type):
         "fixed_experiment_directory": True,
         "dataset": {
             "name": "infilling",
-            "data_directory": f"/g/g90/lee1029/workspace/OptLM/protein_tune_rl/data/nos_data/{data}",
+            "data_directory": "/g/g90/lee1029/workspace/OptLM/protein_tune_rl/data/nos_data/" + data,
+            "chain" : "HC",
+            "region" : "HCDR3"
         },
         "tokenizer": {
             "tokenizer_config": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
             "padding_side": "left",
         },
-        "collator": {"mask_region": "HCDR3"},
-        "policy_model": {
+
+        "collator":
+        {
+            "name" : "infilling"
+        },
+
+        "policy_model":
+        {
             "name": "iglm",
             "path": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
         },
@@ -116,14 +123,12 @@ def main():
         json.dump(train_config, f, indent=4)
 
     eval_config = generate_common(args.reward, metric_params, "evaluator")
-    eval_config["evaluator"]["name"] = "online_rl_evaluator"
-    eval_config["experiment_directory"] = "output/ref"
-    eval_config["metric"].append(
-        {
-            "name": "prot_gpt2_scoring",
-            "params": {
-                "model": "/usr/workspace/vaccines/abag_seq/weights/pretrained/protgpt2"
-            },
+    eval_config["evaluator"]["name"] = "iglm"
+    eval_config["experiment_directory"] =  "output/ref"
+    eval_config["metric"].append({
+        "name": "prot_gpt2_scoring",
+        "params": {
+            "model": "/usr/workspace/vaccines/abag_seq/weights/pretrained/protgpt2"
         }
     )
     eval_config["metric"].append({"name": "progen2_scoring", "params": {}})
