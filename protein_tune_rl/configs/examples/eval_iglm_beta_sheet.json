@@ -5,8 +5,7 @@
         "name": "iglm",
         "model_name" : "iglm",
         "batch_size": 5,
-        "max_length": 22,
-        "use_cuda": true
+        "max_length": 22
     },
 
     "experiment_directory": "test_run",

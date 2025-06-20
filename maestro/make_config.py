@@ -32,7 +32,6 @@ def generate_common(metric, metric_params, tuner_type):
         {
             "batch_size": 8,
             "max_length": 22,
-            "use_cuda": True,
             "check_point_freq": 50,
             "total_optimization_steps": 150
         },
@@ -43,7 +42,9 @@ def generate_common(metric, metric_params, tuner_type):
         "dataset":
         {
             "name": "infilling",
-            "data_directory": "/g/g90/lee1029/workspace/OptLM/protein_tune_rl/data/nos_data/" + data
+            "data_directory": "/g/g90/lee1029/workspace/OptLM/protein_tune_rl/data/nos_data/" + data,
+            "chain" : "HC",
+            "region" : "HCDR3"
         },
 
         "tokenizer":
@@ -54,7 +55,7 @@ def generate_common(metric, metric_params, tuner_type):
 
         "collator":
         {
-            "mask_region": "HCDR3"
+            "name" : "infilling"
         },
 
         "policy_model":
@@ -117,7 +118,7 @@ def main():
         json.dump(train_config, f, indent=4)
 
     eval_config = generate_common(args.reward, metric_params, "evaluator")
-    eval_config["evaluator"]["name"] = "online_rl_evaluator"
+    eval_config["evaluator"]["name"] = "iglm"
     eval_config["experiment_directory"] =  "output/ref"
     eval_config["metric"].append({
         "name": "prot_gpt2_scoring",
