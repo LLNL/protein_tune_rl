@@ -2,7 +2,7 @@
 {
     "evaluator":
         {
-            "name" : "ss_perc_sheet_sequence",             
+            "name" : "sequence",
             "batch_size" : 1,
             "model_name" : "seeds"
         },
@@ -15,7 +15,7 @@
             "region" : "HCDR3"   
         },
     
-    "experiment_directory" : "/p/vast1/hayes56/optlm/",
+    "experiment_directory" : "test_run",
    
 
     "metric":
@@ -30,7 +30,9 @@
         
         {
             "name": "prot_gpt2_scoring",
-            "params": { }
+            "params": {
+                "model": "/usr/workspace/vaccines/abag_seq/weights/pretrained/protgpt2"
+            }
         }
     ]
 

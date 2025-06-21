@@ -2,7 +2,7 @@
 {
     "evaluator":
         {
-            "name" : "sasa",             
+            "name" : "iglm",
             "batch_size" : 1,
             "model_name" : "iglm"
         },
@@ -15,7 +15,7 @@
             "region" : "HCDR3"   
         },
     
-    "experiment_directory" : "/p/vast1/hayes56/optlm/",
+    "experiment_directory" : "test_run",
     
     "tokenizer" : 
     {
