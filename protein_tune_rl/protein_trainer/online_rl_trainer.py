@@ -84,7 +84,7 @@ class OnlineRLSampler:
         self.attn_impl = config['policy_model'].get('attn_implementation', "eager")
         self.model = create_model(
             name="iglm",
-            hf_config=config['policy_model']['path'],
+            hf_config=config['policy_model']['dir'],
             vocab_size=self.tokenizer.vocab_size,
             attn_implementation=self.attn_impl,
         ).to(self.device)
@@ -215,7 +215,7 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
         if self.use_KL_penalty:
             self.ref_model = create_model(
                 name="iglm",
-                hf_config=config['policy_model']['path'],
+                hf_config=config['policy_model']['dir'],
                 vocab_size=self.tokenizer.vocab_size,
             ).to(self.device)
             self.ref_model.eval()

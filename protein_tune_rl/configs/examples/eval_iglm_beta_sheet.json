@@ -4,7 +4,7 @@
     {
         "name": "iglm",
         "model_name" : "iglm",
-        "batch_size": 5,
+        "batch_size": 1,
         "max_length": 22
     },
 
@@ -64,7 +64,7 @@
     "generator" : 
 
     {
-        "num_to_generate" : 1, 
+        "num_to_generate" : 10,
         "top_p" : 1,
         "temperature" :  1,
         "max_length" : 150,
