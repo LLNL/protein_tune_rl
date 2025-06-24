@@ -125,7 +125,7 @@ class PPO:
         if len(logp) % self.minibatch_size != 0:
             raise ValueError("Minibatch size must be a factor of the batch size")
 
-        shuffled_idx = torch.arange(len(logp))
+        shuffled_idx = torch.randperm(len(logp))
 
         for start in range(0, len(logp), self.minibatch_size):
             end = start + self.minibatch_size
