@@ -6,7 +6,11 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import Adam
 from transformers.modeling_outputs import CausalLMOutput
 
-from protein_tune_rl.util.util import compute_logp, normalize_across_processes, compute_mean_across_processes
+from protein_tune_rl.util.util import (
+    compute_logp,
+    normalize_across_processes,
+    compute_mean_across_processes,
+)
 
 
 class StateValue(nn.Module):
@@ -133,10 +137,5 @@ class PPO:
 
             mini_state = {key: val[idx] for key, val in state.items()}
             self._minibatch_step(
-                reward[idx],
-                adv[idx],
-                old_logp[idx],
-                mini_state,
-                action[idx]
+                reward[idx], adv[idx], old_logp[idx], mini_state, action[idx]
             )
-
