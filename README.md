@@ -10,112 +10,66 @@
 
 ![Status](https://img.shields.io/badge/Status-Active-green.svg)
 ![Python](https://img.shields.io/badge/Python-3.9-blue.svg)
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Introduction
+**ProteinTuneRL** is a flexible framework for protein sequence optimization using **infilling language models** and **reinforcement learning (RL)**. It supports general-purpose protein design and provides targeted tools for antibody engineering.
 
-Welcome to the `ProteinTuneRL` repository! ProteinTuneRL is an innovative framework that applies reinforcement learning (RL) to the challenging task of protein design. Traditional protein engineering often grapples with the vastness of the protein sequence space, making it difficult to pinpoint sequences that exhibit optimal stability, activity, or specificity. By integrating state-of-the-art generative models with tailored RL algorithms, ProteinTuneRL provides a robust and systematic approach to fine-tuning these models, steering them toward generating protein sequences with desired properties.
+At its core, ProteinTuneRL uses **IgLM** — a transformer-based infilling model — to generate or modify specific regions (e.g. CDR loops) of protein sequences while preserving framework context. It combines this with online and offline RL to steer generation toward desirable properties like stability or binding affinity.
 
-## Theoretical Background
+---
 
-ProteinTuneRL allows users to fine-tune a generative model $\pi_{\theta}(y|x)$ to generate protein sequences with desired properties. This is achieved by maximizing the following objective:
+## 🔬 Key Features
 
-$$
-\max_{\pi_{\theta}} \left(
-\underbrace{\mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi_{\theta}(y|x)} \left[ r(x, y) \right]}_{\substack{\text{generate sequences} \\ \text{with favorable properties}}} - \beta\, \underbrace{\mathbb{D}_{\text{KL}} \left[ \pi_{\theta}(y|x) \,\|\, \pi_{\text{ref}}(y|x) \right]}_{\substack{\text{maintain the likelihood} \\ \text{of the original model}}}
-\right)
-$$
-where $r(x, y)$ is the reward function that evaluates the quality of the generated sequence $y$ given the input $x$, $\mathcal{D}$ is the dataset of input sequences $x$, and $\pi_{\text{ref}}$ is a reference model that the fine-tuned model $\pi_{\theta}$ should not deviate too far from.
+* **Infilling-Based Generation**: Uses [IgLM](https://www.cell.com/cell-systems/fulltext/S2405-4712(23)00271-5?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS2405471223002715%3Fshowall%3Dtrue) to redesign specific regions (e.g. antibody loops) while attending to the surrounding context.
+* **Reinforcement Learning**: Supports **online RL** (via PPO with KL regularization) and **offline RL** (via [DRO](https://arxiv.org/abs/2405.19107)) to fine-tune models for task-specific objectives.
+* **Antibody Design Ready**: Built-in support for CDR infilling and developability-aware optimization.
+* **General Protein Design**: Flexible masking and reward customization allow applications beyond antibodies.
 
-### Online Learning
+---
 
-In the online learning setting, the dataset $\mathcal{D}$ is not fixed, and the model $\pi_{\theta}$ is updated in an iterative manner. The objective can be rewritten as:
+## 🧠 How It Works
 
-$$
-\max_{\pi_{\theta}} \left(
-\mathbb{E}_{x \sim \mathcal{D},\, y \sim \pi_{\theta}(y|x)} \left[ 
-r(x, y) - \beta\, \log \frac{\pi_{\theta}(y|x)}{\pi_{\text{ref}}(y|x)}
-\right]
-\right).
-$$
+1. **Infilling Model (IgLM)**
+   Protein sequences are modified using IgLM, which can "fill in" masked regions (like CDR loops) of user-defined length based on surrounding context.
 
-We provide two algorithms, `reinforce` and `ppo`, to optimize the above objective. The `reinforce` algorithm is a simple policy gradient method, while the `ppo` algorithm is a more advanced method that uses a clipped surrogate objective to stabilize the training process.
+2. **Online RL (PPO)**
+   IgLM is fine-tuned using **Proximal Policy Optimization** to maximize a custom reward function while staying close to the original model.
 
-### Offline Learning
+3. **Offline RL (DRO)**
+   A lightweight, sample-efficient method to align IgLM with empirical data from fixed datasets.
 
-For many protein design tasks, the dataset $\mathcal{D} = \{ x_i, y_i, r_i \}_{i=1}^N$ is fixed and can be used to pre-train the model $\pi_{\theta}$. For example, experimental data can be used to train a model that generates sequences with high stability. We provide `dro`, an implementation of the [Offline Regularised Reinforcement Learning for Large Language Models Alignment](https://arxiv.org/abs/2405.19107) algorithm to optimize the following derivation of the above objective:
+---
 
-$$
-\mathcal{L}_{\text{DRO}} = \frac{1}{2} \mathbb{E}_{ \{x,y,r \} \sim \mathcal{D} }
-\left[
-  \left( r - V_{\varphi}(x) - \beta \log \frac{\pi_{\theta}(y|x)}{\pi_{\text{ref}}(y|x)} \right)^2 
-\right]
-$$
+## 🚀 Quickstart
 
-where $V(x)$ is a value function that estimates the quality of the input $x$.
-
-## Basic installation
-
-Basic installation can be done by running the following command: 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+git clone https://github.com/LLNL/protein_tune_rl.git
+cd protein_tune_rl
 pip install -e '.'
 ```
 
-## Installation on Lassen
+### Example: Optimize CDR Loops with Online RL
 
-<details>
-<summary>Click to expand</summary>
-
-- Follow the steps in [Nikoli Dryden's note](https://lc.llnl.gov/confluence/display/~dryden1/PyTorch+2.5+from+source+on+Lassen), up to the section `Set up your environment for future use`. Adjust the paths/environment names as needed. Remark: if you would like to use the `openmm` refine feature in `IgFold`, choose python 3.9 instead of python 3.11 when setting up the conda environment.
-- Suppose the conda environment created in the previous step is named `ProteinTuneRL`, activate the environment:
 ```bash
-conda activate ProteinTuneRL
-```
-- (Optional) install `openmm` (note that the latest version on ppc64le is 7.6, as opposed to 7.7 recommended by `IgFold`):
-```bash
-conda install openmm
-```
-- Install `ProteinTuneRL`:
-```bash
-pip install -e '.'
-```
-or if folding signal is needed:
-```bash
-pip install -e '.'[folding]
+python protein_tune_rl/tune.py \
+  --config-file protein_tune_rl/configs/examples/ft_iglm_beta_sheet_ppo.json
 ```
 
-</details>
+---
 
-### Running on Lassen
+## 🛠 Development
 
-<details>
-<summary>Click to expand</summary>
-
-- On a single node (4 GPUs by default):
-```bash
-python tune.py -cf config/ft_iglm_folding.json
-```
-- On multiple nodes (the following example assumes the number of nodes is 2, which is specified after `-N`)
-```bash
-export MASTER_ADDR=$(jsrun --nrs 1 -r 1 hostname)
-lrun -T4 -N2 python tune.py -cf configs/ft_iglm_folding.json
-```
-
-</details>
-
-### For development
-
-Install the package in development mode with the following command:
 ```bash
 pip install -e '.[dev]'
-```
-
-For convenience, you can use automatic editing tools like `black`, `flake8`, and `isort` to format your code. You can run the following commands to format your code:   
-
-```bash
 black -S -t py39 protein_tune_rl
 flake8 --ignore=E501,E203,W503 protein_tune_rl
-isort protein_tune_rl # isort will automatically sort imports in the correct order
+isort protein_tune_rl
 ```
 
+---
+
+## 📄 License
+
+Released under the [MIT License](LICENSE). <br>
+SPDX-License-Identifier: MIT <br>
+LLNL-CODE-2006374
