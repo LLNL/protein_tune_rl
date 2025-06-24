@@ -18,7 +18,7 @@ class ParallelLogger:
 
             # Use datefmt for uniform timestamps
             formatter = logging.Formatter(
-                "ptrl %(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+                "[%(asctime)s: %(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
             )
             ch.setFormatter(formatter)
             self.logger.addHandler(ch)
