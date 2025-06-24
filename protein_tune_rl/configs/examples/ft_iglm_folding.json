@@ -33,7 +33,7 @@
     "policy_model":
     {
         "name": "iglm",
-        "path": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
+        "dir": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
         "attn_implementation": "sdpa"
     },
 
