@@ -57,7 +57,9 @@ class ProteinTuneRL:
     def _setup_tune(self):
         exp_output_dir = self._build_tune_output_dir()
         self.protein_tuner = create_trainer(self.config['trainer']['name'])(self.config)
+        # Only set the output directory for rank 0 to avoid conflicts
         if dist.get_rank() == 0 and not self.fixed_output_dir:
+            # Append the experiment output directory to the base output directory
             self.exp_output_dir /= exp_output_dir
 
     def _setup_eval(self):
