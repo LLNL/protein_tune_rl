@@ -137,7 +137,7 @@ class DROTrainer(Trainer):
                 )
 
                 log_df = pd.concat([log_df, step_log_df])
-                log_df.to_csv(f"{output_dir}/dro_log.csv")
+                log_df.to_csv(f"{output_dir}/dro_trainer_log.csv", index=False)
 
                 if (current_step % self.check_point_freq == 0) and (current_step > 0):
                     # save policy network to disk
