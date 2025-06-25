@@ -25,10 +25,7 @@ class KLPenalty:
         self.K_b = 0.1
         self.target = target
 
-        if device is None:
-            self.device = torch.device("cpu")
-        else:
-            self.device = device
+        self.device = torch.device("cpu") if device is None else device
 
     def __call__(self, logp, sequences):
         init_size = sequences["init_size"]
