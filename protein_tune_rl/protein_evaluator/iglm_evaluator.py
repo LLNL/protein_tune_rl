@@ -156,7 +156,11 @@ class IGLMEvaluator(Evaluator):
                         score = None
 
                     logger.info(
-                        f"rank {dist.get_rank()}; {batch_number}, seq {full_sampled_sequence}; infilled seq {infilled_sequence}; score {score}"
+                        f"Rank {dist.get_rank()}; "
+                        f"Batch {batch_number + 1}, "
+                        f"Sampled Sequence: {full_sampled_sequence}, "
+                        f"Infilling: {infilled_sequence}, "
+                        f"Score: {score}"
                     )
 
                     scores.append(score)
@@ -182,6 +186,6 @@ class IGLMEvaluator(Evaluator):
         final_df = gather_dataframes(eval_df, device=self.device)
 
         if dist.get_rank() == 0:
-            final_df.to_csv(f"{output_dir}/{self.model_name}_eval.csv")
+            final_df.to_csv(f"{output_dir}/{self.model_name}_evaluator_log.csv")
 
         return final_df
