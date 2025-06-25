@@ -159,4 +159,7 @@ class DROTrainer(Trainer):
                 if current_step >= self.total_optimization_steps:
                     break
 
+        # Final save after training completes
+        self.policy.module.save(output_dir / "models/final")
+
         return log_df
