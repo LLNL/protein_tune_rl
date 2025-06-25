@@ -125,7 +125,9 @@ class DROTrainer(Trainer):
                 current_step += 1
 
                 logger.info(
-                    f"step {current_step}, batch: {batch_number+1}; policy loss: {policy_loss}; value loss {value_loss}"
+                    f"Step {current_step}, Batch {batch_number + 1}: "
+                    f"Policy Loss: {policy_loss.item():.4f}, "
+                    f"Value Loss: {value_loss.item():.4f}"
                 )
 
                 step_log_df = pd.DataFrame.from_dict(
@@ -140,16 +142,16 @@ class DROTrainer(Trainer):
                 log_df.to_csv(f"{output_dir}/dro_trainer_log.csv", index=False)
 
                 if (current_step % self.check_point_freq == 0) and (current_step > 0):
-                    # save policy network to disk
+                    # Save the policy model to disk
                     torch.save(
                         self.policy.state_dict(),
-                        f"{output_dir}/policy_model_{current_step}.bin",
+                        f"{output_dir}/policy_model_step_{current_step}.bin",
                     )
 
-                    # save value network to disk
+                    # Save the value model to disk
                     torch.save(
                         self.value.state_dict(),
-                        f"{output_dir}/value_model_{current_step}.bin",
+                        f"{output_dir}/value_model_step_{current_step}.bin",
                     )
 
                 if current_step >= self.total_optimization_steps:
