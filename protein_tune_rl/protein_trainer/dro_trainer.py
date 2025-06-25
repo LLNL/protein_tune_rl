@@ -142,17 +142,19 @@ class DROTrainer(Trainer):
                 log_df.to_csv(f"{output_dir}/dro_trainer_log.csv", index=False)
 
                 if (current_step % self.check_point_freq == 0) and (current_step > 0):
-                    # Save the policy model to disk
+
+                    # State Dict Save
                     torch.save(
                         self.policy.state_dict(),
                         f"{output_dir}/policy_model_step_{current_step}.bin",
                     )
-
-                    # Save the value model to disk
                     torch.save(
                         self.value.state_dict(),
                         f"{output_dir}/value_model_step_{current_step}.bin",
                     )
+
+                    # Full Model Save
+                    self.policy.module.save(output_dir / f"models/batch{current_step}")
 
                 if current_step >= self.total_optimization_steps:
                     break
