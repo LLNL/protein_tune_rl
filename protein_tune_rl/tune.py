@@ -215,6 +215,9 @@ def main(config_file, runs, mode, num_procs):
         os.environ["MASTER_ADDR"] = "localhost"
         if num_procs == -1:
             num_procs = torch.cuda.device_count()
+            logger.info(
+                f"Auto-detected {num_procs} GPUs. Using all available GPUs for parallel processing."
+            )
         mp.spawn(
             experiment,
             args=(
