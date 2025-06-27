@@ -49,9 +49,8 @@ def generate_common(metric, metric_params, tuner_type):
     data = "training_data.csv" if tuner_type == "trainer" else "eval_data.csv"
     return {
         tuner_type: {
-            "batch_size": 8,
+            "batch_size": 8 if tuner_type == "trainer" else 1,
             "max_length": 22,
-            "use_cuda": True,
             "check_point_freq": 50,
             "total_optimization_steps": 150,
         },
@@ -60,15 +59,17 @@ def generate_common(metric, metric_params, tuner_type):
         "dataset": {
             "name": "infilling",
             "data_directory": f"/g/g90/lee1029/workspace/OptLM/protein_tune_rl/data/nos_data/{data}",
+            "chain" : "HC",
+            "region" : "HCDR3"
         },
         "tokenizer": {
             "tokenizer_config": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
             "padding_side": "left",
         },
-        "collator": {"mask_region": "HCDR3"},
+        "collator": {"name": "infilling"},
         "policy_model": {
             "name": "iglm",
-            "path": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
+            "dir": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm"
         },
         "metric": [
             {"name": metric, "params": metric_params},
@@ -116,7 +117,9 @@ def main():
         json.dump(train_config, f, indent=4)
 
     eval_config = generate_common(args.reward, metric_params, "evaluator")
-    eval_config["evaluator"]["name"] = "online_rl_evaluator"
+    eval_config["evaluator"]["name"] = "iglm"
+    eval_config["evaluator"]["model_name"] ="iglm"
+    eval_config["tokenizer"]["name"] = "iglm_tokenizer"
     eval_config["experiment_directory"] = "output/ref"
     eval_config["metric"].append(
         {
@@ -138,11 +141,31 @@ def main():
         }
     )
 
+    eval_config["generator"] = {
+        "num_to_generate" : 1,
+        "top_p" : 1,
+        "temperature" :  1,
+        "max_length" : 150,
+        "bad_word_ids" :
+                            [[0],
+                            [1],
+                            [3],
+                            [4],
+                            [25],
+                            [26],
+                            [27],
+                            [28],
+                            [29],
+                            [30],
+                            [31],
+                            [32]]
+    }
+
     with open("config_eval_ref.json", "w") as f:
         json.dump(eval_config, f, indent=4)
 
     eval_config["experiment_directory"] = "output/ft"
-    eval_config["model"]["path"] = "models/final"
+    eval_config["policy_model"]["dir"] = "models/final"
     with open("config_eval_ft.json", "w") as f:
         json.dump(eval_config, f, indent=4)
 

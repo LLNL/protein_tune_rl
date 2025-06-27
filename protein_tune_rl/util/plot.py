@@ -29,8 +29,8 @@ def plot_pareto_frontiers(
     ref_model_path, ft_model_path, output_dir, feature, likelihood
 ):
 
-    ref_scores = pd.read_csv(ref_model_path / 'eval_scores.csv').to_dict("list")
-    ft_scores = pd.read_csv(ft_model_path / 'eval_scores.csv').to_dict("list")
+    ref_scores = pd.read_csv(ref_model_path / 'iglm_eval.csv').to_dict("list")
+    ft_scores = pd.read_csv(ft_model_path / 'iglm_eval.csv').to_dict("list")
 
     ref_log_likelihood = ref_scores[likelihood]
     ref_rewards = ref_scores[feature]
@@ -59,11 +59,12 @@ def plot_pareto_frontiers(
 
 
 def plot_distribution(ref_model_path, ft_model_path, output_dir):
-    ref_scores = pd.read_csv(ref_model_path / 'eval_scores.csv').to_dict("list")
-    ft_scores = pd.read_csv(ft_model_path / 'eval_scores.csv').to_dict("list")
+    ref_scores = pd.read_csv(ref_model_path / 'iglm_eval.csv').to_dict("list")
+    ft_scores = pd.read_csv(ft_model_path / 'iglm_eval.csv').to_dict("list")
 
     for metric in ref_scores:
-        if metric == 'Unnamed: 0':
+        print("metric:", metric)
+        if metric in ['Unnamed: 0', 'completion', 'HC', 'LC', 'prompts']:
             continue
 
         fig, ax = plt.subplots(figsize=(12, 6))

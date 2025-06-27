@@ -10,7 +10,7 @@ class InfillingCollator(DataCollatorWithPadding):
     ):
         assert tokenizer.padding_side == "left"
         self.tokenizer = tokenizer
-        self.conditional_tokens = "[HUMAN] [HEAVY] "
+        self.conditional_tokens = "[HEAVY] [HUMAN] "
         self.mask_token = "[MASK]"
 
     def __call__(self, batch):

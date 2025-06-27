@@ -1,13 +1,16 @@
 import copy
 
 import torch
-import torch.distributed as dist
 from torch import nn
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import Adam
 from transformers.modeling_outputs import CausalLMOutput
 
-from protein_tune_rl.util.util import compute_logp
+from protein_tune_rl.util.util import (
+    compute_logp,
+    normalize_across_processes,
+    compute_mean_across_processes,
+)
 
 
 class StateValue(nn.Module):
@@ -87,6 +90,24 @@ class PPO:
 
         return -torch.min(surr1, surr2).mean()
 
+    def _minibatch_step(self, reward, adv, old_logp, state, action):
+        if self.normalize_adv:
+            adv = normalize_across_processes(adv)
+
+        self.policy_optimizer.zero_grad()
+        if self.baseline == "state_value":
+            self.value_optimizer.zero_grad()
+
+        policy_loss = self._compute_clip_loss(adv, old_logp, state, action)
+        policy_loss.backward(retain_graph=True)
+        self.policy_optimizer.step()
+
+        if self.baseline == "state_value":
+            value = self.state_value(**state)
+            value_loss = nn.MSELoss()(value, reward)
+            value_loss.backward()
+            self.value_optimizer.step()
+
     def step(self, reward, baseline, logp, entropy, batch):
         init_size = batch["init_size"]
         action = batch["input_ids"][:, init_size:].to(self.device).detach()
@@ -99,52 +120,22 @@ class PPO:
         old_logp = logp.detach()
 
         if self.baseline == "mean":
-            r_mean = self._compute_mean_across_processes(reward)
+            r_mean = compute_mean_across_processes(reward)
             adv = reward - r_mean
         elif self.baseline == "state_value":
             value = self.state_value(**state)
             adv = reward - value.detach()
 
-        if self.normalize_adv:
-            if self.baseline == "mean":
-                adv_mean = 0.0
-            else:
-                adv_mean = self._compute_mean_across_processes(adv)
-
-            adv_var = torch.square(adv.norm(p=2)) / len(adv) - adv_mean**2
-            adv_var = self._reduce_mean_across_processes(adv_var)
-            adv_std = torch.sqrt(adv_var)
-
-            adv = (adv - adv_mean) / (adv_std + 1e-10)
-
         if len(logp) % self.minibatch_size != 0:
             raise ValueError("Minibatch size must be a factor of the batch size")
 
+        shuffled_idx = torch.randperm(len(logp))
+
         for start in range(0, len(logp), self.minibatch_size):
-            self.policy_optimizer.zero_grad()
-            if self.baseline == "state_value":
-                self.value_optimizer.zero_grad()
-
             end = start + self.minibatch_size
+            idx = shuffled_idx[start:end]
 
-            mini_state = {key: val[start:end] for key, val in state.items()}
-            policy_loss = self._compute_clip_loss(
-                adv[start:end], old_logp[start:end], mini_state, action[start:end]
+            mini_state = {key: val[idx] for key, val in state.items()}
+            self._minibatch_step(
+                reward[idx], adv[idx], old_logp[idx], mini_state, action[idx]
             )
-            policy_loss.backward(retain_graph=True)
-            self.policy_optimizer.step()
-
-            if self.baseline == "state_value":
-                value = self.state_value(**mini_state)
-                value_loss = nn.MSELoss()(value, reward[start:end])
-                value_loss.backward()
-                self.value_optimizer.step()
-
-    def _compute_mean_across_processes(self, arg0):
-        result = arg0.mean()
-        return self._reduce_mean_across_processes(result)
-
-    def _reduce_mean_across_processes(self, arg0):
-        dist.all_reduce(arg0, dist.ReduceOp.SUM)
-        arg0 /= dist.get_world_size()
-        return arg0

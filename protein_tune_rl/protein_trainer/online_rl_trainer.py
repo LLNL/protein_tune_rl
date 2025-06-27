@@ -87,7 +87,7 @@ class OnlineRLSampler:
         self.attn_impl = config['policy_model'].get('attn_implementation', "eager")
         self.model = create_model(
             name="iglm",
-            hf_config=config['policy_model']['path'],
+            hf_config=config['policy_model']['dir'],
             vocab_size=self.tokenizer.vocab_size,
             attn_implementation=self.attn_impl,
         ).to(self.device)
@@ -218,7 +218,7 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
         if self.use_KL_penalty:
             self.ref_model = create_model(
                 name="iglm",
-                hf_config=config['policy_model']['path'],
+                hf_config=config['policy_model']['dir'],
                 vocab_size=self.tokenizer.vocab_size,
             ).to(self.device)
             self.ref_model.eval()
@@ -267,7 +267,12 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
                 reward_mean /= dist.get_world_size()
 
                 if self.use_KL_penalty:
-                    reward += self.KL_penalty(logp, tokenized_batch)
+                    KL_penalty = self.KL_penalty(logp, tokenized_batch)
+                    reward += KL_penalty
+                    KL_mean = KL_penalty.mean()
+                    dist.all_reduce(KL_mean, dist.ReduceOp.SUM)
+                    KL_mean /= dist.get_world_size()
+                    logger.info(f"step: {current_step}, KL mean: {KL_mean}")
 
                 self.optimizer.step(reward, reward_mean, logp, entropy, tokenized_batch)
 
