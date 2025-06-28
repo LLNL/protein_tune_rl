@@ -6,6 +6,8 @@ from protein_tune_rl.metrics.lm_scoring import LanguageModelScoring
 from protein_tune_rl.models import create_model
 from protein_tune_rl.tokenizer import create_tokenizer
 
+from protein_tune_rl import logger
+
 
 def exists(x):
     return x is not None
@@ -45,6 +47,7 @@ class IgLMScoring(LanguageModelScoring):
         """
         Replace the current scoring model with a new one (e.g., the current training policy).
         """
+        logger.info("Updating IGLM model in scoring function")
         self.model = new_model
         self.model.eval()
 
