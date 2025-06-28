@@ -1,5 +1,6 @@
 from typing import Dict
 from protein_tune_rl.metrics.iglm_scoring import IgLMScoring
+from protein_tune_rl import logger
 
 
 class IgLMKLScoring:
@@ -18,6 +19,13 @@ class IgLMKLScoring:
 
         # Initialize the reference model
         self.reference_IgLMScoring = IgLMScoring(ref_model, tokenizer)
+
+    def update_model(self, new_model):
+        """
+        Replace the current scoring model with a new one (e.g., the current training policy).
+        """
+        logger.info("Updating IGLM model in KL scoring function")
+        self.primary_IgLMScoring.update_model(new_model)
 
     def __call__(self, chains: Dict):
         """
