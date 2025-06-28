@@ -153,7 +153,6 @@ class IGLMEvaluator(Evaluator):
 
         for batch_number, batch in enumerate(iter(self.dataloader)):
             self.policy.eval()
-
             tokenized_batch = self.collator(batch)
 
             for idx, sequence in enumerate(
