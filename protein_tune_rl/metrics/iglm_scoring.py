@@ -41,6 +41,13 @@ class IgLMScoring(LanguageModelScoring):
 
         return model_nn
 
+    def update_model(self, new_model):
+        """
+        Replace the current scoring model with a new one (e.g., the current training policy).
+        """
+        self.model = new_model
+        self.model.eval()
+
     def mask_span(self, seq, start: int, end: int, append_span: bool = False):
         """
         Mask a span in the sequence with a mask token.
