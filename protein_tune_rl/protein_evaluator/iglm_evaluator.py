@@ -14,7 +14,15 @@ from protein_tune_rl.util.util import gather_dataframes
 
 
 class IGLMEvaluator(Evaluator):
-    def __init__(self, config):
+    def __init__(self, config, policy_model=None):
+        """
+        Initializes the IGLM Evaluator with the provided configuration and policy model.
+
+        Args:
+            config (dict): Configuration dictionary containing parameters for evaluation.
+            policy_model (optional): Pre-trained policy model to be used for evaluation. If None, a new model will be created.
+        """
+        super().__init__(config)
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.batch_size = self.config["evaluator"]["batch_size"]
@@ -29,10 +37,10 @@ class IGLMEvaluator(Evaluator):
         self.bad_word_ids = self.config["generator"]["bad_word_ids"]
 
         self.dataset = create_dataset(
-            name=self.config['dataset']['name'],
-            data_directory=self.config['dataset']['data_directory'],
-            chain=self.config["dataset"]["chain"],
-            region=self.config["dataset"]["region"],
+            name=self.config['dataset_eval']['name'],
+            data_directory=self.config['dataset_eval']['data_directory'],
+            chain=self.config['dataset_eval']["chain"],
+            region=self.config['dataset_eval']["region"],
         )
 
         self.tokenizer = create_tokenizer(
@@ -42,24 +50,37 @@ class IGLMEvaluator(Evaluator):
         )
 
         self.collator = create_collator(
-            name=self.config['collator']['name'], tokenizer=self.tokenizer, eval=True
+            name=self.config['collator_eval']['name'],
+            tokenizer=self.tokenizer,
+            eval=True,
         )
 
         self.dataloader = create_dataloader(
             self.dataset, batch_size=self.batch_size, shuffle=True
         )
 
-        self.policy = create_model(
-            name="iglm",
-            hf_config=self.config['policy_model']['dir'],
-            vocab_size=self.tokenizer.vocab_size,
-        ).to(self.device)
+        # If external policy model is provided, use it
+        if policy_model is not None:
+            self.policy = policy_model
+        else:
+            self.policy = create_model(
+                name="iglm",
+                hf_config=self.config['policy_model']['dir'],
+                vocab_size=self.tokenizer.vocab_size,
+            ).to(self.device)
 
         self.metric_function = []
         self.metric_function.extend(
             create_metric(name=metric["name"])(**metric["params"])
             for metric in self.config['metric']
         )
+
+    def update_policy(self, new_policy):
+        """
+        Replace the current policy model with a new one (e.g., from training).
+        Useful for online evaluation to avoid re-instantiating the evaluator.
+        """
+        self.policy = new_policy
 
     def generate(
         self,
