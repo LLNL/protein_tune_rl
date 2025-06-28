@@ -86,7 +86,13 @@ class IGLMEvaluator(Evaluator):
         Replace the current policy model with a new one (e.g., from training).
         Useful for online evaluation to avoid re-instantiating the evaluator.
         """
+        logger.info("Updating IGLM model in evaluator")
         self.policy = new_policy
+
+        # Update model reference inside each metric that has update_model()
+        for metric in self.metric_function:
+            if hasattr(metric, "update_model"):
+                metric.update_model(new_policy)
 
     def generate(
         self,
