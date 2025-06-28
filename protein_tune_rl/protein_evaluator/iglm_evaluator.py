@@ -75,6 +75,12 @@ class IGLMEvaluator(Evaluator):
             for metric in self.config['metric']
         )
 
+        # Which metrics use generated sequences?
+        self.metric_use_generated = [
+            metric_cfg.get("use_generated", True)
+            for metric_cfg in self.config['metric']
+        ]
+
     def update_policy(self, new_policy):
         """
         Replace the current policy model with a new one (e.g., from training).
