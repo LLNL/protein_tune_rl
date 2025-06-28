@@ -15,7 +15,16 @@ from protein_tune_rl.tokenizer import create_tokenizer
 
 class DROTrainer(Trainer):
     def __init__(self, config):
+        """Initialize the DRO Trainer with the provided configuration.
+
+        Args:
+            config (dict): Configuration dictionary containing parameters for training.
+        """
+        super().__init__(config)
+
+        # Store the configuration.
         self.config = config
+
         # Catch with device is available.
         if torch.cuda.is_available():
             self.device_ids = [torch.cuda.current_device()]
@@ -89,7 +98,7 @@ class DROTrainer(Trainer):
             rescaling=self.config["trainer"]["rescaling"],
         )
 
-        # Initialize the optimizer.
+        # Initialize the optimizer
         self.optimizer_class = create_optimizer(self.config["trainer"]["optimizer"])
         self.policy_optimizer = self.optimizer_class(
             self.policy.parameters(), lr=self.learning_rate
@@ -97,6 +106,41 @@ class DROTrainer(Trainer):
         self.value_optimizer = self.optimizer_class(
             self.value.parameters(), lr=self.learning_rate
         )
+
+        if self.config["trainer"].get("evaluate_during_training", False):
+            logger.info(
+                "Online evaluation is enabled. Evaluator will be run during training."
+            )
+
+            # Instantiate the evaluator if online evaluation is enabled
+            from protein_tune_rl.protein_evaluator.iglm_evaluator import IGLMEvaluator
+
+            # If DDP-wrapped, pass .module (unwrap the DDP model)
+            eval_policy = self._unwrap_ddp_model(self.policy)
+            self.evaluator = IGLMEvaluator(self.config, policy_model=eval_policy)
+
+    def _unwrap_ddp_model(self, model):
+        """Unwrap DDP model to get the underlying model."""
+        return (
+            model.module
+            if isinstance(model, torch.nn.parallel.DistributedDataParallel)
+            else model
+        )
+
+    def save_models(self, output_dir, current_step):
+        """Save both state dict and full model checkpoints."""
+        # State Dict Save
+        torch.save(
+            self.policy.state_dict(),
+            f"{output_dir}/policy_model_step_{current_step}.bin",
+        )
+        torch.save(
+            self.value.state_dict(),
+            f"{output_dir}/value_model_step_{current_step}.bin",
+        )
+
+        # Full Model Save
+        self.policy.module.save(output_dir / f"models/batch{current_step}")
 
     def run(self, output_dir):
         log_df = pd.DataFrame()
@@ -143,18 +187,29 @@ class DROTrainer(Trainer):
 
                 if (current_step % self.check_point_freq == 0) and (current_step > 0):
 
-                    # State Dict Save
-                    torch.save(
-                        self.policy.state_dict(),
-                        f"{output_dir}/policy_model_step_{current_step}.bin",
-                    )
-                    torch.save(
-                        self.value.state_dict(),
-                        f"{output_dir}/value_model_step_{current_step}.bin",
-                    )
+                    self.save_models(output_dir, current_step)
 
-                    # Full Model Save
-                    self.policy.module.save(output_dir / f"models/batch{current_step}")
+                    # Run online evaluation if configured
+                    if self.config["trainer"].get("evaluate_during_training", False):
+
+                        logger.info(f"Running evaluation at step {current_step}...")
+
+                        # If DDP-wrapped, pass .module (unwrap the DDP model)
+                        eval_policy = self._unwrap_ddp_model(self.policy)
+
+                        # Update evaluator with the current policy model
+                        self.evaluator.update_policy(eval_policy)
+
+                        with torch.no_grad():
+                            eval_df = self.evaluator.run(output_dir)
+
+                        # Save evaluation results
+                        eval_df.to_csv(
+                            f"{output_dir}/evaluation_results_step_{current_step}.csv",
+                            index=False,
+                        )
+
+                        logger.info(f"Evaluation done at step {current_step}.")
 
                 if current_step >= self.total_optimization_steps:
                     break
