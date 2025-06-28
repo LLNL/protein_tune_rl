@@ -142,6 +142,27 @@ class DROTrainer(Trainer):
         # Full Model Save
         self.policy.module.save(output_dir / f"models/batch{current_step}")
 
+    def run_evaluation(self, output_dir, current_step):
+        """Run evaluation at the current training step."""
+        logger.info(f"Running evaluation at step {current_step}...")
+
+        # If DDP-wrapped, pass .module (unwrap the DDP model)
+        eval_policy = self._unwrap_ddp_model(self.policy)
+
+        # Update evaluator with the current policy model
+        self.evaluator.update_policy(eval_policy)
+
+        with torch.no_grad():
+            eval_df = self.evaluator.run(output_dir)
+
+        # Save evaluation results
+        eval_df.to_csv(
+            f"{output_dir}/evaluation_results_step_{current_step}.csv",
+            index=False,
+        )
+
+        logger.info(f"Evaluation done at step {current_step}.")
+
     def run(self, output_dir):
         log_df = pd.DataFrame()
 
@@ -192,24 +213,7 @@ class DROTrainer(Trainer):
                     # Run online evaluation if configured
                     if self.config["trainer"].get("evaluate_during_training", False):
 
-                        logger.info(f"Running evaluation at step {current_step}...")
-
-                        # If DDP-wrapped, pass .module (unwrap the DDP model)
-                        eval_policy = self._unwrap_ddp_model(self.policy)
-
-                        # Update evaluator with the current policy model
-                        self.evaluator.update_policy(eval_policy)
-
-                        with torch.no_grad():
-                            eval_df = self.evaluator.run(output_dir)
-
-                        # Save evaluation results
-                        eval_df.to_csv(
-                            f"{output_dir}/evaluation_results_step_{current_step}.csv",
-                            index=False,
-                        )
-
-                        logger.info(f"Evaluation done at step {current_step}.")
+                        self.run_evaluation(output_dir, current_step)
 
                 if current_step >= self.total_optimization_steps:
                     break
