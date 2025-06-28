@@ -5,7 +5,6 @@ import numpy as np
 from protein_tune_rl.metrics.lm_scoring import LanguageModelScoring
 from protein_tune_rl.models import create_model
 from protein_tune_rl.tokenizer import create_tokenizer
-
 from protein_tune_rl import logger
 
 
