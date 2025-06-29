@@ -153,7 +153,7 @@ class DROTrainer(Trainer):
         self.evaluator.update_policy(eval_policy)
 
         with torch.no_grad():
-            eval_df = self.evaluator.run(output_dir)
+            eval_df = self.evaluator.run_with_ground_truth(output_dir)
 
         # Save evaluation results
         eval_df.to_csv(
