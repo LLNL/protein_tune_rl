@@ -178,7 +178,7 @@ class IGLMEvaluator(Evaluator):
                         "seq_post_mask": tokenized_batch["seq_post_mask"],
                     }
 
-                    # score the sequence under some eval function (SASA)
+                    # Score the sequence using the metric functions
                     try:
                         score = [
                             metric_function(chains)
