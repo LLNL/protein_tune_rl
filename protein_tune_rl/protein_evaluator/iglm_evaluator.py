@@ -120,7 +120,7 @@ class IGLMEvaluator(Evaluator):
 
             tokens = tokens[0]  # Squeeze out batch   dimension
 
-            # decode sequence ids for IgLM
+            # Decode sequence ids for IgLM
             decoded_sequence = [
                 self.tokenizer.tokenizer.convert_ids_to_tokens([next_token][0])
                 for next_token in tokens.tolist()
