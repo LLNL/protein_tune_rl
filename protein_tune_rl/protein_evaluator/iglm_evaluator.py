@@ -58,7 +58,9 @@ class IGLMEvaluator(Evaluator):
         )
 
         self.dataloader = create_dataloader(
-            self.dataset, batch_size=self.batch_size, shuffle=True
+            self.dataset,
+            batch_size=self.batch_size,
+            shuffle=self.config['dataset_eval'].get('shuffle_dataloader', True),
         )
 
         # If external policy model is provided, use it
@@ -248,6 +250,14 @@ class IGLMEvaluator(Evaluator):
 
         for batch_number, batch in enumerate(iter(self.dataloader)):
             self.policy.eval()
+
+            ###
+            # HACK: June 29, 2025 - Mikel
+            # substitute the key "region" in batch for '"completions"
+            if "region" in batch:
+                batch["completions"] = batch.pop("region")
+            ###
+
             tokenized_batch = self.collator(batch)
 
             # Generate sequences if needed by any metric
