@@ -58,7 +58,7 @@ def generate_common(metric, metric_params, tuner_type):
         "fixed_experiment_directory": True,
         "dataset": {
             "name": "infilling",
-            "data_directory": "/g/g90/lee1029/workspace/OptLM/protein_tune_rl/data/nos_data/" + data,
+            "data_directory": f"/g/g90/lee1029/workspace/OptLM/protein_tune_rl/data/nos_data/{data}",
             "chain" : "HC",
             "region" : "HCDR3"
         },
@@ -66,14 +66,8 @@ def generate_common(metric, metric_params, tuner_type):
             "tokenizer_config": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
             "padding_side": "left",
         },
-
-        "collator":
-        {
-            "name" : "infilling"
-        },
-
-        "policy_model":
-        {
+        "collator": {"name": "infilling"},
+        "policy_model": {
             "name": "iglm",
             "dir": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm"
         },
