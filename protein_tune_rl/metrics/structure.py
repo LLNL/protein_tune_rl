@@ -33,7 +33,8 @@ class StructureBasedMetric:
         for model in self.igfold.models:
             model.to(device)
 
-        rank = dist.get_rank()
+        rank = os.environ.get("JSM_NAMESPACE_RANK")
+        rank = dist.get_rank() if rank is None else rank
         self.workspace = f"folding_workspace/rank{rank}/"
         os.makedirs(self.workspace, exist_ok=True)
 
@@ -43,12 +44,17 @@ class StructureBasedMetric:
         num_tries = 0
         output_pdb_file = self.workspace + name + ".pdb"
 
+        extracted_chains = {
+            "L": chains["L"],
+            "H": chains["H"]
+        }
+
         while True:
             try:
                 with HidePrints():  # hide prints from igfold
                     out = self.igfold.fold(
                         output_pdb_file,  # Output PDB file
-                        sequences=chains,  # Antibody sequences
+                        sequences=extracted_chains,  # Antibody sequences
                         **self.options,
                         # do_refine=True, # Refine the antibody structure with PyRosetta
                         # use_openmm=False, # Use OpenMM for refinement
@@ -57,7 +63,7 @@ class StructureBasedMetric:
 
                 pdb_has_end, _ = check_pdb(output_pdb_file)
             except Exception as e:
-                print(f"Error: {e}")
+                print(f"Error in StructureBasedMetric: {e}")
                 pdb_has_end = False
 
             num_tries += 1

@@ -18,7 +18,7 @@ class StateValue(nn.Module):
         super(StateValue, self).__init__()
         self.model_in = copy.deepcopy(model_in.module.model)
         self.linear_head_initialized = False
-        self.linear_head = nn.Linear(model_in.lm_head.in_features, 1)
+        self.linear_head = nn.Linear(self.model_in.lm_head.in_features, 1)
         self.name = name
 
     def forward(

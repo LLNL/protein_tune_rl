@@ -21,6 +21,7 @@
 
     "tokenizer":
     {
+        "name" : "iglm_tokenizer",
         "tokenizer_config": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
         "padding_side": "left"
     },
