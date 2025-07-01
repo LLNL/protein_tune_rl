@@ -225,6 +225,7 @@ def main(config_file, runs, mode, num_procs):
             logger.info(
                 f"Auto-detected {num_procs} GPUs. Using all available GPUs for parallel processing."
             )
+        # Pytorch's mp.spawn will launch num_procs processes for DDP
         mp.spawn(
             experiment,
             args=(
