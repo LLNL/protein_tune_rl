@@ -1,13 +1,33 @@
 def create_evaluator(name):
-    """
-    There are three types:
-        - iglm: for evaluating fine-tuned or original IgLMs
-        - sequence: for evaluating sequences from a dataset
-        - dro_value: for evaluating sequences from a dataset using DRO value network as metric
+    """Create and return an evaluator class based on the specified name.
 
-    For 'iglm' and 'sequence', the evaluation can be done on multiple metrics
-    like ss_perc_sheet, SASA, and LM scorings (specified in the config), while
-    the metric for 'dro_value' is fixed (the DRO value network).
+    This factory function instantiates different types of protein sequence evaluators
+    for various evaluation scenarios in protein design and optimization.
+
+    Args:
+        name (str): The type of evaluator to create. Must be one of:
+            - "iglm": For evaluating fine-tuned or original IgLM models
+            - "sequence": For evaluating sequences from a dataset
+            - "dro_value": For evaluating sequences using DRO value network as metric
+
+    Returns:
+        class: The evaluator class (not an instance) that can be instantiated with
+               appropriate configuration parameters.
+
+    Raises:
+        ValueError: If the evaluator name is not recognized.
+        RuntimeError: If there's an error importing or creating the evaluator.
+
+    Note:
+        - For 'iglm' and 'sequence' evaluators, evaluation can be performed using
+          multiple metrics (e.g., ss_perc_sheet, SASA, LM scorings) as specified
+          in the configuration.
+        - For 'dro_value' evaluator, the metric is fixed to the DRO value network.
+
+    Example:
+        >>> evaluator_class = create_evaluator("iglm")
+        >>> evaluator = evaluator_class(config)
+        >>> results = evaluator.run(output_dir)
     """
 
     try:
