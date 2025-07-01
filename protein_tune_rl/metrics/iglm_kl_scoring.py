@@ -36,7 +36,11 @@ class IgLMKLScoring:
         where :math:`p_theta` is the primary model and :math:`p_ref` is the reference model.
         Note that the score can be then used to compute an approximate KL divergence using:
         .. math::
-            KL(p_theta(x) || p_ref(x)) = \frac{1}{N} sum_(i=1)^N score(y_i) with y_i ~ p_theta(x)
+            KL(p_theta(x) || p_ref(x)) \approx \frac{1}{N} sum_(i=1)^N score(y_i) with y_i ~ p_theta(x)
+
+        Recall that the KL divergence is defined as:
+        .. math::
+            KL(p_theta(x) || p_ref(x)) = E_{p_theta(x)}[log p_theta(x) - log p_ref(x)]
         """
 
         infill_range = (
