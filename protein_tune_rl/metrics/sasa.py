@@ -17,12 +17,10 @@ class SASA(StructureBasedMetric):
     ):
         if options is None:
             options = {"do_renum": False}
-        super().__init__(folding_tool, options)
+        super().__init__(folding_tool, options, mean, std)
 
         self.parser = PDBParser(QUIET=1)
         self.sr = ShrakeRupley()
-        self.mean = mean
-        self.std = std
 
     def __call__(self, chains: Dict):
         name = f"fold{str(self.count)}"

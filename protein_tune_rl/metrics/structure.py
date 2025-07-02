@@ -9,11 +9,20 @@ from protein_tune_rl.util.util import HidePrints, check_pdb
 
 
 class StructureBasedMetric:
-    def __init__(self, folding_tool: str, options: Dict = None):
+    def __init__(
+        self,
+        folding_tool: str,
+        options: Dict = None,
+        mean: float = 0.0,
+        std: float = 1.0,
+    ):
         if options is None:
             options = {}
         assert folding_tool.lower() == "igfold", "Currently only IgFold is supported!"
         self.options = options
+
+        self.mean = mean
+        self.std = std
 
         if options["do_refine"] and not options["use_openmm"]:
             from igfold.refine.pyrosetta_ref import init_pyrosetta

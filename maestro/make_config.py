@@ -96,6 +96,9 @@ def main():
     elif args.reward == "ss_perc_sheet":
         metric_params["mean"] = 0.3784639359426365
         metric_params["std"] = 0.017445864484741506
+    elif args.reward == "folding_confidence":
+        metric_params["mean"] = 0.7233366161042375
+        metric_params["std"] = 0.031452952774115195
 
     train_config = generate_common(args.reward, metric_params, "trainer")
     train_config["trainer"]["check_point_freq"] = 500_000
@@ -113,7 +116,7 @@ def main():
     if args.optimizer == "dro":
         train_config["trainer"]["name"] = "dro"
         train_config["trainer"]["learning_rate"] = 1e-4
-        train_config["trainer"]["tau"] = 0.75
+        train_config["trainer"]["tau"] = args.KL_weight # 0.75
         train_config["trainer"]["optimizer"] = "adafactor"
         train_config["trainer"]["rescaling"] = True
         train_config["trainer"]["mean_loss"] = True
@@ -136,9 +139,8 @@ def main():
     with open("config_train.json", "w") as f:
         json.dump(train_config, f, indent=4)
 
-    if "mean" in metric_params:
-        metric_params.pop("mean")
-        metric_params.pop("std")
+    metric_params.pop("mean")
+    metric_params.pop("std")
 
     eval_config = generate_common(args.reward, metric_params, "evaluator")
     eval_config["evaluator"]["name"] = "iglm"
