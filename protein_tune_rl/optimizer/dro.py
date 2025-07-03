@@ -16,6 +16,7 @@ class DRO:
         tau,
         mean=True,
         rescaling=True,
+        reward_rescaling=1.0,
     ):
         self.policy = policy  # -> Pi theta
         self.value = value  # -> V pi
@@ -25,6 +26,7 @@ class DRO:
         self.tau = tau
         self.mean = mean
         self.rescaling = rescaling
+        self.reward_rescaling = reward_rescaling
 
     def generate_logits(self, batch, attention_mask=None):
 
@@ -64,6 +66,9 @@ class DRO:
 
         # Tensor shape (batch_size, 1)
         rewards = batch['rewards'].to(self.device).unsqueeze(1).float().flatten()
+
+        # Rescale rewards if rescaling is enabled
+        rewards = rewards * self.reward_rescaling
 
         # Tensor shape (batch_size, sequence_length-1, vocab_size)
         pi_logits, ref_logits = self.generate_logits(

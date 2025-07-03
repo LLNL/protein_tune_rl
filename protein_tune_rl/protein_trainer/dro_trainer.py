@@ -96,6 +96,7 @@ class DROTrainer(Trainer):
             tau=self.config["trainer"]["tau"],
             mean=self.config["trainer"]["mean_loss"],
             rescaling=self.config["trainer"]["rescaling"],
+            reward_rescaling=self.config["trainer"].get("reward_rescaling", 1.0),
         )
 
         # Initialize the optimizer
