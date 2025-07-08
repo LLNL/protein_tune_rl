@@ -7,7 +7,7 @@ from protein_tune_rl import logger
 def create_dataloader(dataset, batch_size, shuffle=True, collate_fn=None):
 
     if batch_size > len(dataset):
-        logger.warning(
+        logger.info(
             f"Batch size {batch_size} is larger than dataset size {len(dataset)}. Adjusting batch size to dataset size."
         )
         batch_size = len(dataset)
