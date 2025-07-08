@@ -376,7 +376,7 @@ class IGLMEvaluator(Evaluator):
             try:
                 metric_scores.append(metric_function(chains))
             except Exception as e:
-                logger.warning(f"Metric error on generated sample: {e}")
+                logger.info(f"Metric error on generated sample: {e}")
                 metric_scores.append(None)
 
         # Return average of valid scores
@@ -388,7 +388,7 @@ class IGLMEvaluator(Evaluator):
         try:
             return metric_function(gt_chains)
         except Exception as e:
-            logger.warning(f"Metric error on GT sample: {e}")
+            logger.info(f"Metric error on GT sample: {e}")
             return None
 
     def _collect_sample_results(
