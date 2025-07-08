@@ -18,6 +18,34 @@ class DRO:
         rescaling=True,
         reward_rescaling=1.0,
     ):
+        """
+        Initialize the DRO (Direct Reward Optimization) training module.
+
+        Args:
+            policy (nn.Module): Trainable policy model (π_θ) producing token logits.
+            reference (nn.Module): Fixed reference model (π_ref) producing token logits.
+            value (nn.Module): Value network (V_φ) predicting soft value for an input prompt.
+            tokenizer: Tokenizer matching both policy and reference models.
+            device (torch.device): Device to perform computations on (e.g., 'cpu', 'cuda').
+            tau (float): KL-temperature hyperparameter (β), controlling policy-reference divergence penalty.
+            mean (bool, optional): If True, normalize losses by sequence length. Defaults to True.
+            rescaling (bool, optional): If True, applies temperature rescaling on policy loss using tau. Defaults to True.
+            reward_rescaling (float or callable, optional): Scaling factor (or callable transform) applied to raw rewards before loss. Defaults to 1.0.
+
+        Attributes:
+            policy, reference, value: Stored modules for forward pass.
+            tokenizer, device: Tools for input processing and device allocation.
+            tau: Controls strength of KL penalty in DRO objective.
+            mean: Toggle for per-token loss normalization.
+            rescaling: Enables or disables temperature scaling on policy loss via tau.
+            reward_rescaling: Factor applied to scale rewards before usage in loss.
+
+        Notes:
+            - The policy and reference models are expected to accept input_ids and attention_mask arguments
+              and output logits over the token vocabulary.
+            - Loss normalization (mean=True) divides per-example losses by number of prediction tokens.
+            - Reward rescaling can balance gradients when reward magnitudes vary significantly.
+        """
         self.policy = policy  # -> Pi theta
         self.value = value  # -> V pi
         self.reference = reference  # -> Pi ref
