@@ -1,6 +1,7 @@
 import pandas as pd
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
+import torch.distributed as dist
 
 from protein_tune_rl import logger
 from protein_tune_rl.collator import create_collator
@@ -130,18 +131,34 @@ class DROTrainer(Trainer):
 
     def save_models(self, output_dir, current_step):
         """Save both state dict and full model checkpoints."""
-        # State Dict Save
-        torch.save(
-            self.policy.state_dict(),
-            f"{output_dir}/policy_model_step_{current_step}.bin",
-        )
-        torch.save(
-            self.value.state_dict(),
-            f"{output_dir}/value_model_step_{current_step}.bin",
-        )
 
-        # Full Model Save
-        self.policy.module.save(output_dir / f"models/batch{current_step}")
+        # Only the main (rank 0) process saves the checkpoints
+        if dist.get_rank() == 0:
+
+            # Ensure all processes are ready for checkpointing
+            dist.barrier()
+
+            # Save DDP state dicts and full (unwrapped) model
+            torch.save(
+                self.policy.state_dict(),
+                f"{output_dir}/policy_model_step_{current_step}.bin",
+            )
+            torch.save(
+                self.value.state_dict(),
+                f"{output_dir}/value_model_step_{current_step}.bin",
+            )
+
+            # Full Model Save
+            self.policy.module.save(output_dir / f"models/batch{current_step}")
+
+            # Signal other ranks to proceed
+            dist.barrier()
+        else:
+            # Non-zero ranks wait for checkpoint to complete
+            dist.barrier()
+            dist.barrier()
+
+        logger.info(f"Models saved at step {current_step} to {output_dir}.")
 
     def run_evaluation(self, output_dir, current_step):
         """Run evaluation at the current training step."""
@@ -156,11 +173,13 @@ class DROTrainer(Trainer):
         with torch.no_grad():
             eval_df = self.evaluator.run_with_ground_truth(output_dir)
 
-        # Save evaluation results
-        eval_df.to_csv(
-            f"{output_dir}/evaluation_results_step_{current_step}.csv",
-            index=False,
-        )
+        if eval_df is not None:
+            eval_df.to_csv(
+                f"{output_dir}/evaluation_results_step_{current_step}.csv",
+                index=False,
+            )
+        else:
+            logger.info(f"Rank {dist.get_rank()} did not perform evaluation.")
 
         logger.info(f"Evaluation done at step {current_step}.")
 
