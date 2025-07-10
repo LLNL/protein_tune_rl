@@ -215,16 +215,18 @@ class DROTrainer(Trainer):
                     f"Value Loss: {value_loss.item():.4f}"
                 )
 
-                step_log_df = pd.DataFrame.from_dict(
-                    {
-                        "step": [current_step],
-                        "policy_loss": [policy_loss.item()],
-                        "value_loss": [value_loss.item()],
-                    }
-                )
+                if dist.get_rank() == 0:
+                    step_log_df = pd.DataFrame.from_dict(
+                        {
+                            "step": [current_step],
+                            "policy_loss": [policy_loss.item()],
+                            "value_loss": [value_loss.item()],
+                        }
+                    )
 
-                log_df = pd.concat([log_df, step_log_df])
-                log_df.to_csv(f"{output_dir}/dro_trainer_log.csv", index=False)
+                    log_df = pd.concat([log_df, step_log_df])
+                    log_df.to_csv(f"{output_dir}/dro_trainer_log.csv", index=False)
+                dist.barrier
 
                 if (current_step % self.check_point_freq == 0) and (current_step > 0):
 
