@@ -61,14 +61,14 @@ class DRO:
         # Call LLM (Pi theta) and get model logits for batch prompts
         # Tensor shape (batch_size, sequence_length)
         pi_logits = self.policy(
-            batch['input_ids'].to(self.device), attention_mask=attention_mask.float()
+            batch["input_ids"].to(self.device), attention_mask=attention_mask.float()
         ).logits
 
         # Call LLM (Pi ref) and get model logits with no gradients for batch prompts
         # Tensor shape (batch_size, sequence_length)
         with torch.no_grad():
             ref_logits = self.reference(
-                batch['input_ids'].to(self.device), attention_mask=attention_mask
+                batch["input_ids"].to(self.device), attention_mask=attention_mask
             ).logits
 
         # Tensor shape (batch_size, sequence_length-1)
@@ -79,7 +79,7 @@ class DRO:
 
     def calculate_loss(self, batch):
         # Tensor shape (batch_size, sequence_length)
-        labels = batch['labels'].clone().to(self.device)
+        labels = batch["labels"].clone().to(self.device)
         # Create attention mask so only completion tokens are attended to
         # Tensor shape (batch_size, sequence_length)
         policy_attention_mask = torch.ones(labels.shape).to(self.device) * (labels != 0)
@@ -93,7 +93,7 @@ class DRO:
         labels[labels == -100] = 0
 
         # Tensor shape (batch_size, 1)
-        rewards = batch['rewards'].to(self.device).unsqueeze(1).float().flatten()
+        rewards = batch["rewards"].to(self.device).unsqueeze(1).float().flatten()
 
         # Rescale rewards if rescaling is enabled
         rewards = rewards * self.reward_rescaling
@@ -120,12 +120,12 @@ class DRO:
 
         # Tensor shape (batch_size, 1)
         # Call V pi for given prompts
-        value_attention_mask = torch.ones(batch['prompts'].shape) * (
-            batch['prompts'] != 0
+        value_attention_mask = torch.ones(batch["prompts"].shape) * (
+            batch["prompts"] != 0
         )
         value = (
             self.value(
-                batch['prompts'].to(self.device),
+                batch["prompts"].to(self.device),
                 attention_mask=value_attention_mask.to(self.device),
             )
             .float()
