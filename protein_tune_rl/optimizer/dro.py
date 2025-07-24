@@ -132,7 +132,8 @@ class DRO:
             .flatten()
         )
 
-        # Detach from graph to remove gradient calculation for loss functions
+        # Create non-differentiable copies of value and log_ratio for stable targets
+        # Prevents gradients from flowing back through these during value loss computation
         value_no_grad = value.clone().detach()
         log_ratio_no_grad = log_ratio.clone().detach()
 
