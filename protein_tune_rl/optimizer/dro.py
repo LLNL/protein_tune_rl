@@ -113,7 +113,7 @@ class DRO:
             * (
                 ((pi_log_probs * loss_mask).sum(-1) / loss_denom)
                 * (rewards - value_no_grad)
-                - policy_tau
+                - self.tau
                 / 2
                 * torch.pow((log_ratio * loss_mask).sum(-1) / loss_denom, 2)
             ).mean()
