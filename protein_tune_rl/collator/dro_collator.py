@@ -5,6 +5,8 @@ from torch.nn.utils.rnn import pad_sequence
 
 
 class DROCollator:
+    """Collator for DRO training or evaluation of IgLM."""
+
     def __init__(self, tokenizer, eval=False):
         self.tokenizer = tokenizer
         self.eval = eval
@@ -44,6 +46,63 @@ class DROCollator:
         return input_sequences, input_completions, input_mask
 
     def __call__(self, batch):
+        """Collate raw sequence data for DRO training or evaluation of IgLM.
+        Following the IgLM paper, sequences in the batch are masked for infilling.
+        The batch of collated sequences is padded on the right.
+
+        For example, suppose the batch of raw sequences is:
+            [
+                'EVQLVESIQP',
+                'QVQLQQPGAEL'
+            ]
+        Suppose the regions to be masked are respectively:
+            [
+                'LVES',
+                'QPG'
+            ]
+        For training, the collated batch will contain (the input_ids
+        corresponding to) the prompts:
+            [
+                '[HEAVY] [HUMAN] E V Q [MASK] I Q P [SEP] [PAD] [PAD]',
+                '[HEAVY] [HUMAN] Q V Q L Q [MASK] A E L [SEP]'
+            ]
+        and the prompts with completions:
+            [
+                '[HEAVY] [HUMAN] E V Q [MASK] I Q P [SEP] L V E S [CLS] [PAD]',
+                '[HEAVY] [HUMAN] Q V Q L Q [MASK] A E L [SEP] Q P G [CLS]'
+            ]
+        For evaluation, the collated batch only contains the prompt.
+
+        Parameters
+        ----------
+        batch : dict
+            A batch of raw sequence data containing:
+                prompt : list of str
+                    sequence (heavy chain) to be masked
+                LC : list of str
+                    the paired light chain
+                region : list of str
+                    sequence (part of prompt) to be replaced by [MASK] token
+
+        Returns
+        -------
+        collated_batch : dict
+            A batch of collated data containing:
+                input_ids : torch.Tensor
+                    Input ids to language models of prompts (with completions if eval=False)
+                prompts : torch.Tensor
+                    Input ids to language models of prompts
+                LC : list of str
+                    the paired light chain (return only if eval=True)
+                seq_pre_mask : list of str
+                    sequence before [MASK] token
+                seq_post_mask : list of str
+                    sequence after [MASK] token
+                label : torch.Tensor
+                    Mask for completion
+                reward : list of float
+                    Rewards of the sequences in the batch (return only if eval=False)
+        """
 
         (
             masked_prompts,
