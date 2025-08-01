@@ -295,7 +295,9 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
                     )
 
                     if self.use_KL_penalty:
-                        step_log["KL_mean"] = [KL_mean.cpu().numpy() / -self.KL_penalty.beta]
+                        step_log["KL_mean"] = [
+                            KL_mean.cpu().numpy() / -self.KL_penalty.beta
+                        ]
                     log_df = pd.concat([log_df, step_log], ignore_index=True)
                     log_df.to_csv(exp_output_dir / "train_log.csv")
                 dist.barrier()

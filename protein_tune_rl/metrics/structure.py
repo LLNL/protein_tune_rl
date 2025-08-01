@@ -53,10 +53,7 @@ class StructureBasedMetric:
         num_tries = 0
         output_pdb_file = self.workspace + name + ".pdb"
 
-        extracted_chains = {
-            "L": chains["L"],
-            "H": chains["H"]
-        }
+        extracted_chains = {"L": chains["L"], "H": chains["H"]}
 
         while True:
             try:
