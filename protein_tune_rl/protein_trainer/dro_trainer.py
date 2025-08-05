@@ -230,7 +230,8 @@ class DROTrainer(Trainer):
 
                 if (current_step % self.check_point_freq == 0) and (current_step > 0):
 
-                    self.save_models(output_dir, current_step)
+                    if self.config["trainer"].get("save_models", True):
+                        self.save_models(output_dir, current_step)
 
                     # Run online evaluation if configured
                     if self.config["trainer"].get("evaluate_during_training", False):
