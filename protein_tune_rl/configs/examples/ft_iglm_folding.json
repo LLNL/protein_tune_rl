@@ -21,6 +21,7 @@
 
     "tokenizer":
     {
+        "name" : "iglm_tokenizer",
         "tokenizer_config": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
         "padding_side": "left"
     },
@@ -57,7 +58,9 @@
                     "use_openmm": true,
                     "do_renum": false
                 }
-            }
+            },
+            "mean": 0.7233366161042375,
+            "std": 0.031452952774115195
         }
     ],
 
