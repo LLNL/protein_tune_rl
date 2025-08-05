@@ -235,7 +235,6 @@ class DROTrainer(Trainer):
 
                     # Run online evaluation if configured
                     if self.config["trainer"].get("evaluate_during_training", False):
-
                         self.run_evaluation(output_dir, current_step)
 
                 if current_step >= self.total_optimization_steps:
