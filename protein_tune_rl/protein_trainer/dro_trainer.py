@@ -132,31 +132,18 @@ class DROTrainer(Trainer):
     def save_models(self, output_dir, current_step):
         """Save both state dict and full model checkpoints."""
 
-        # Only the main (rank 0) process saves the checkpoints
-        if dist.get_rank() == 0:
+        # Save DDP state dicts and full (unwrapped) model
+        torch.save(
+            self.policy.state_dict(),
+            f"{output_dir}/policy_model_step_{current_step}.bin",
+        )
+        torch.save(
+            self.value.state_dict(),
+            f"{output_dir}/value_model_step_{current_step}.bin",
+        )
 
-            # Ensure all processes are ready for checkpointing
-            dist.barrier()
-
-            # Save DDP state dicts and full (unwrapped) model
-            torch.save(
-                self.policy.state_dict(),
-                f"{output_dir}/policy_model_step_{current_step}.bin",
-            )
-            torch.save(
-                self.value.state_dict(),
-                f"{output_dir}/value_model_step_{current_step}.bin",
-            )
-
-            # Full Model Save
-            self.policy.module.save(output_dir / f"models/batch{current_step}")
-
-            # Signal other ranks to proceed
-            dist.barrier()
-        else:
-            # Non-zero ranks wait for checkpoint to complete
-            dist.barrier()
-            dist.barrier()
+        # Full Model Save
+        self.policy.module.save(output_dir / f"models/batch{current_step}")
 
         logger.info(f"Models saved at step {current_step} to {output_dir}.")
 
@@ -231,11 +218,15 @@ class DROTrainer(Trainer):
                 if (current_step % self.check_point_freq == 0) and (current_step > 0):
 
                     if self.config["trainer"].get("save_models", True):
-                        self.save_models(output_dir, current_step)
+                        if dist.get_rank() == 0:
+                            self.save_models(output_dir, current_step)
+                        dist.barrier()
 
                     # Run online evaluation if configured
                     if self.config["trainer"].get("evaluate_during_training", False):
-                        self.run_evaluation(output_dir, current_step)
+                        if dist.get_rank() == 0:
+                            self.run_evaluation(output_dir, current_step)
+                        dist.barrier()
 
                 if current_step >= self.total_optimization_steps:
                     break
