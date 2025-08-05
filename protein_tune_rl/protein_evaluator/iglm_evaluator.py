@@ -224,12 +224,7 @@ class IGLMEvaluator(Evaluator):
                 metric_score[idx] for metric_score in scores
             ]
 
-        final_df = gather_dataframes(eval_df, device=self.device)
-
-        if dist.get_rank() == 0:
-            final_df.to_csv(f"{output_dir}/{self.model_name}_evaluator_log.csv")
-
-        return final_df
+        return self._gather_and_save(eval_df, output_dir)
 
     def run_with_ground_truth(self, output_dir):
         """
@@ -270,11 +265,12 @@ class IGLMEvaluator(Evaluator):
 
         # Create and save DataFrame
         eval_df = self._create_evaluation_dataframe(results)
-        final_df = gather_dataframes(eval_df, device=self.device)
+        return self._gather_and_save(eval_df, output_dir)
 
+    def _gather_and_save(self, eval_df, output_dir):
+        final_df = gather_dataframes(eval_df, device=self.device)
         if dist.get_rank() == 0:
             final_df.to_csv(f"{output_dir}/{self.model_name}_evaluator_log.csv")
-
         return final_df
 
     def _generate_sequences_if_needed(self, tokenized_batch):
