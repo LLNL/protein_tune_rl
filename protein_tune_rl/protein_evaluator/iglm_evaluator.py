@@ -52,7 +52,7 @@ class IGLMEvaluator(Evaluator):
         )
 
         self.collator = create_collator(
-            name=self.config['collator_eval']['name'],
+            name=self.config['collator']['name'],
             tokenizer=self.tokenizer,
             eval=True,
         )
