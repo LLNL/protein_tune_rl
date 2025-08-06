@@ -17,19 +17,20 @@ def create_dataloader(dataset, batch_size, shuffle=True, collate_fn=None):
     # to ensure all processes have data to work with.
     # drop_last is a boolean indicating whether to drop the last incomplete batch.
     num_reps = dist.get_world_size()
-    drop = len(dataset) > num_reps
+    drop_sampler = len(dataset) > num_reps
+    drop_loader = len(dataset) >= batch_size * num_reps
 
     sampler = DistributedSampler(
         dataset,
         num_replicas=dist.get_world_size(),
         rank=dist.get_rank(),
         shuffle=shuffle,
-        drop_last=drop,
+        drop_last=drop_sampler,
     )
     return DataLoader(
         dataset,
         batch_size=batch_size,
         collate_fn=collate_fn,
         sampler=sampler,
-        drop_last=True,
+        drop_last=drop_loader,
     )
