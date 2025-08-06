@@ -38,11 +38,16 @@ class IGLMEvaluator(Evaluator):
         self.max_length = self.config["generator"]["max_length"]
         self.bad_word_ids = self.config["generator"]["bad_word_ids"]
 
+        # Choose dataset configuration: prefer dataset_eval if available, else fallback to dataset
+        ds_config = self.config.get("dataset_eval", self.config.get("dataset"))
+        if ds_config is None:
+            raise KeyError("Missing both 'dataset_eval' and 'dataset' in config.")
+
         self.dataset = create_dataset(
-            name=self.config['dataset_eval']['name'],
-            data_directory=self.config['dataset_eval']['data_directory'],
-            chain=self.config['dataset_eval']["chain"],
-            region=self.config['dataset_eval']["region"],
+            name=ds_config['name'],
+            data_directory=ds_config['data_directory'],
+            chain=ds_config["chain"],
+            region=ds_config["region"],
         )
 
         self.tokenizer = create_tokenizer(
@@ -60,7 +65,7 @@ class IGLMEvaluator(Evaluator):
         self.dataloader = create_dataloader(
             self.dataset,
             batch_size=self.batch_size,
-            shuffle=self.config['dataset_eval'].get('shuffle_dataloader', True),
+            shuffle=ds_config.get('shuffle_dataloader', True),
         )
 
         # If external policy model is provided, use it
@@ -144,7 +149,7 @@ class IGLMEvaluator(Evaluator):
 
         return decoded_sequences, decoded_infills
 
-    def run(self):
+    def run(self, output_dir=None):
         """
         Run the IGLM Evaluator on the dataset.
         This method evaluates the model on the provided dataset, scoring generated sequences.
@@ -226,7 +231,7 @@ class IGLMEvaluator(Evaluator):
 
         return gather_dataframes(eval_df, device=self.device)
 
-    def run_with_ground_truth(self):
+    def run_with_ground_truth(self, output_dir=None):
         """
         Run the evaluator with ground truth sequences and generated sequences.
         This method evaluates the model on the provided dataset, scoring both ground truth and generated sequences.
