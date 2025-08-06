@@ -160,13 +160,12 @@ class DROTrainer(Trainer):
         with torch.no_grad():
             eval_df = self.evaluator.run_with_ground_truth(output_dir)
 
-        if eval_df is not None:
+        if dist.get_rank() == 0 and eval_df is not None:
             eval_df.to_csv(
                 f"{output_dir}/evaluation_results_step_{current_step}.csv",
                 index=False,
             )
-        else:
-            logger.info(f"Rank {dist.get_rank()} did not perform evaluation.")
+        dist.barrier()
 
         logger.info(f"Evaluation done at step {current_step}.")
 
@@ -224,9 +223,7 @@ class DROTrainer(Trainer):
 
                     # Run online evaluation if configured
                     if self.config["trainer"].get("evaluate_during_training", False):
-                        if dist.get_rank() == 0:
-                            self.run_evaluation(output_dir, current_step)
-                        dist.barrier()
+                        self.run_evaluation(output_dir, current_step)
 
                 if current_step >= self.total_optimization_steps:
                     break
