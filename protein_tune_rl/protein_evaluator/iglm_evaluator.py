@@ -248,7 +248,7 @@ class IGLMEvaluator(Evaluator):
 
             #########################################################
             # HACK: June 29, 2025
-            # substitute the key "region" in batch for '"completions"
+            # substitute the key "region" in batch for "completions"
             if "region" in batch:
                 batch["completions"] = batch.pop("region")
             #########################################################
