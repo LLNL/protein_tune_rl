@@ -144,7 +144,7 @@ class IGLMEvaluator(Evaluator):
 
         return decoded_sequences, decoded_infills
 
-    def run(self, output_dir):
+    def run(self):
         """
         Run the IGLM Evaluator on the dataset.
         This method evaluates the model on the provided dataset, scoring generated sequences.
@@ -224,9 +224,9 @@ class IGLMEvaluator(Evaluator):
                 metric_score[idx] for metric_score in scores
             ]
 
-        return self._gather_and_save(eval_df, output_dir)
+        return gather_dataframes(eval_df, device=self.device)
 
-    def run_with_ground_truth(self, output_dir):
+    def run_with_ground_truth(self):
         """
         Run the evaluator with ground truth sequences and generated sequences.
         This method evaluates the model on the provided dataset, scoring both ground truth and generated sequences.
@@ -265,13 +265,7 @@ class IGLMEvaluator(Evaluator):
 
         # Create and save DataFrame
         eval_df = self._create_evaluation_dataframe(results)
-        return self._gather_and_save(eval_df, output_dir)
-
-    def _gather_and_save(self, eval_df, output_dir):
-        final_df = gather_dataframes(eval_df, device=self.device)
-        if dist.get_rank() == 0:
-            final_df.to_csv(f"{output_dir}/{self.model_name}_evaluator_log.csv")
-        return final_df
+        return gather_dataframes(eval_df, device=self.device)
 
     def _generate_sequences_if_needed(self, tokenized_batch):
         """Generate sequences if any metric requires generated sequences."""
