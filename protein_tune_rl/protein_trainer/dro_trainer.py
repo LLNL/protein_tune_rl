@@ -172,6 +172,8 @@ class DROTrainer(Trainer):
     def run(self, output_dir):
         log_df = pd.DataFrame()
 
+        logger.info(f"Starting training with {len(self.dataloader)} batches.")
+
         current_step = 0
         while current_step < self.total_optimization_steps:
             for batch_number, batch in enumerate(iter(self.dataloader)):
