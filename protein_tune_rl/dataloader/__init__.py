@@ -12,12 +12,19 @@ def create_dataloader(dataset, batch_size, shuffle=True, collate_fn=None):
         )
         batch_size = len(dataset)
 
+    # num_replicas is the number of processes in the distributed setup
+    # If the dataset is smaller than the number of processes, we should not drop data
+    # to ensure all processes have data to work with.
+    # drop_last is a boolean indicating whether to drop the last incomplete batch.
+    num_reps = dist.get_world_size()
+    drop = len(dataset) > num_reps
+
     sampler = DistributedSampler(
         dataset,
         num_replicas=dist.get_world_size(),
         rank=dist.get_rank(),
         shuffle=shuffle,
-        drop_last=True,
+        drop_last=drop,
     )
     return DataLoader(
         dataset,
