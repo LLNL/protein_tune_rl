@@ -170,6 +170,7 @@ class DROTrainer(Trainer):
         logger.info(f"Evaluation done at step {current_step}.")
 
     def run(self, output_dir):
+        """Run the DRO Trainer for the specified number of optimization steps."""
         log_df = pd.DataFrame()
 
         logger.info(f"Starting training with {len(self.dataloader)} batches.")
