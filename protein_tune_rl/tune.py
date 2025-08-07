@@ -57,7 +57,9 @@ class ProteinTuneRL:
     def _setup_tune(self):
         exp_output_dir = self._build_tune_output_dir()
         self.protein_tuner = create_trainer(self.config['trainer']['name'])(self.config)
+        # Only set the output directory for rank 0 to avoid conflicts
         if dist.get_rank() == 0 and not self.fixed_output_dir:
+            # Append the experiment output directory to the base output directory
             self.exp_output_dir /= exp_output_dir
 
     def _setup_eval(self):
@@ -164,11 +166,16 @@ def _set_device_and_print_device_info(rank):
     # Set device for this process will be used by all CUDA operations
     # Without this, each process may try to use the same GPU
     torch.cuda.set_device(device_id)
-    # local_gpus = torch.cuda.device_count()
     per_proc_device = torch.cuda.current_device()
     name = torch.cuda.get_device_name(per_proc_device)
     logger.info(f"Rank {rank} ➜ Using CUDA device cuda:{per_proc_device} ({name})")
-    # logger.info(f"Rank {rank} ➜ Local visible GPUs = {local_gpus}")
+    # If the run is single node, then print the local visible GPUs
+    if (
+        "JSM_NAMESPACE_RANK" not in os.environ
+        and "JSM_NAMESPACE_SIZE" not in os.environ
+    ):
+        local_gpus = torch.cuda.device_count()
+        logger.info(f"Rank {rank} ➜ Local visible GPUs = {local_gpus}")
 
 
 @click.command()
@@ -215,6 +222,10 @@ def main(config_file, runs, mode, num_procs):
         os.environ["MASTER_ADDR"] = "localhost"
         if num_procs == -1:
             num_procs = torch.cuda.device_count()
+            logger.info(
+                f"Auto-detected {num_procs} GPUs. Using all available GPUs for parallel processing."
+            )
+        # Pytorch's mp.spawn will launch num_procs processes for DDP
         mp.spawn(
             experiment,
             args=(

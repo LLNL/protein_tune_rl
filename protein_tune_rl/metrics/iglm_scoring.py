@@ -5,6 +5,7 @@ import numpy as np
 from protein_tune_rl.metrics.lm_scoring import LanguageModelScoring
 from protein_tune_rl.models import create_model
 from protein_tune_rl.tokenizer import create_tokenizer
+from protein_tune_rl import logger
 
 
 def exists(x):
@@ -40,6 +41,14 @@ class IgLMScoring(LanguageModelScoring):
             raise ValueError(f"Error: Cannot load model from {model}") from e
 
         return model_nn
+
+    def update_model(self, new_model):
+        """
+        Replace the current scoring model with a new one (e.g., the current training policy).
+        """
+        logger.info("Updating IGLM model in scoring function")
+        self.model = new_model
+        self.model.eval()
 
     def mask_span(self, seq, start: int, end: int, append_span: bool = False):
         """

@@ -51,13 +51,6 @@
         {
             "name": "progen2_scoring",
             "params": { }
-        },
-        {
-            "name": "iglm_kl_scoring",
-            "params": {
-                "path": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm",
-                "ref_path": "/usr/workspace/vaccines/abag_seq/weights/trained/iglm"
-            }
         }
     ],
 

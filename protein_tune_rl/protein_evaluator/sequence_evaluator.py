@@ -13,6 +13,15 @@ from protein_tune_rl.protein_evaluator.evaluator import Evaluator
 
 class SequenceEvaluator(Evaluator):
     def __init__(self, config):
+        """Initialize the Sequence Evaluator with the provided configuration.
+
+        This evaluator is designed to score sequences from a dataset using specified metrics.
+        No model is loaded; instead, it evaluates sequences directly based on the metrics defined in the configuration.
+
+        Args:
+            config (dict): Configuration dictionary containing parameters for evaluation.
+        """
+
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.batch_size = self.config["evaluator"]["batch_size"]

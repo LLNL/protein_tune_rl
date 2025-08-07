@@ -16,7 +16,36 @@ class DRO:
         tau,
         mean=True,
         rescaling=True,
+        reward_rescaling=1.0,
     ):
+        """
+        Initialize the DRO (Direct Reward Optimization) training module.
+
+        Args:
+            policy (nn.Module): Trainable policy model (π_θ) producing token logits.
+            reference (nn.Module): Fixed reference model (π_ref) producing token logits.
+            value (nn.Module): Value network (V_φ) predicting soft value for an input prompt.
+            tokenizer: Tokenizer matching both policy and reference models.
+            device (torch.device): Device to perform computations on (e.g., 'cpu', 'cuda').
+            tau (float): KL-temperature hyperparameter (β), controlling policy-reference divergence penalty.
+            mean (bool, optional): If True, normalize losses by sequence length. Defaults to True.
+            rescaling (bool, optional): If True, applies temperature rescaling on policy loss using tau. Defaults to True.
+            reward_rescaling (float or callable, optional): Scaling factor (or callable transform) applied to raw rewards before loss. Defaults to 1.0.
+
+        Attributes:
+            policy, reference, value: Stored modules for forward pass.
+            tokenizer, device: Tools for input processing and device allocation.
+            tau: Controls strength of KL penalty in DRO objective.
+            mean: Toggle for per-token loss normalization.
+            rescaling: Enables or disables temperature scaling on policy loss via tau.
+            reward_rescaling: Factor applied to scale rewards before usage in loss.
+
+        Notes:
+            - The policy and reference models are expected to accept input_ids and attention_mask arguments
+              and output logits over the token vocabulary.
+            - Loss normalization (mean=True) divides per-example losses by number of prediction tokens.
+            - Reward rescaling can balance gradients when reward magnitudes vary significantly.
+        """
         self.policy = policy  # -> Pi theta
         self.value = value  # -> V pi
         self.reference = reference  # -> Pi ref
@@ -25,20 +54,21 @@ class DRO:
         self.tau = tau
         self.mean = mean
         self.rescaling = rescaling
+        self.reward_rescaling = reward_rescaling
 
     def generate_logits(self, batch, attention_mask=None):
 
         # Call LLM (Pi theta) and get model logits for batch prompts
         # Tensor shape (batch_size, sequence_length)
         pi_logits = self.policy(
-            batch['input_ids'].to(self.device), attention_mask=attention_mask.float()
+            batch["input_ids"].to(self.device), attention_mask=attention_mask.float()
         ).logits
 
         # Call LLM (Pi ref) and get model logits with no gradients for batch prompts
         # Tensor shape (batch_size, sequence_length)
         with torch.no_grad():
             ref_logits = self.reference(
-                batch['input_ids'].to(self.device), attention_mask=attention_mask
+                batch["input_ids"].to(self.device), attention_mask=attention_mask
             ).logits
 
         # Tensor shape (batch_size, sequence_length-1)
@@ -49,7 +79,7 @@ class DRO:
 
     def calculate_loss(self, batch):
         # Tensor shape (batch_size, sequence_length)
-        labels = batch['labels'].clone().to(self.device)
+        labels = batch["labels"].clone().to(self.device)
         # Create attention mask so only completion tokens are attended to
         # Tensor shape (batch_size, sequence_length)
         policy_attention_mask = torch.ones(labels.shape).to(self.device) * (labels != 0)
@@ -63,7 +93,10 @@ class DRO:
         labels[labels == -100] = 0
 
         # Tensor shape (batch_size, 1)
-        rewards = batch['rewards'].to(self.device).unsqueeze(1).float().flatten()
+        rewards = batch["rewards"].to(self.device).unsqueeze(1).float().flatten()
+
+        # Rescale rewards if rescaling is enabled
+        rewards = rewards * self.reward_rescaling
 
         # Tensor shape (batch_size, sequence_length-1, vocab_size)
         pi_logits, ref_logits = self.generate_logits(
@@ -87,19 +120,20 @@ class DRO:
 
         # Tensor shape (batch_size, 1)
         # Call V pi for given prompts
-        value_attention_mask = torch.ones(batch['prompts'].shape) * (
-            batch['prompts'] != 0
+        value_attention_mask = torch.ones(batch["prompts"].shape) * (
+            batch["prompts"] != 0
         )
         value = (
             self.value(
-                batch['prompts'].to(self.device),
+                batch["prompts"].to(self.device),
                 attention_mask=value_attention_mask.to(self.device),
             )
             .float()
             .flatten()
         )
 
-        # Detach from graph to remove gradient calculation for loss functions
+        # Create non-differentiable copies of value and log_ratio for stable targets
+        # Prevents gradients from flowing back through these during value loss computation
         value_no_grad = value.clone().detach()
         log_ratio_no_grad = log_ratio.clone().detach()
 

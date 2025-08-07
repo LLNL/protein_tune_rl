@@ -16,6 +16,11 @@
 
 At its core, ProteinTuneRL uses **IgLM** — a transformer-based infilling model — to generate or modify specific regions (e.g. CDR loops) of protein sequences while preserving framework context. It combines this with online and offline RL to steer generation toward desirable properties like stability or binding affinity.
 
+<div align="center">
+  <img src="images/antibody_infilling_diagram.png" alt="Overview of ProteinTuneRL's antibody infilling and optimization process" width="700">
+  <p><em>Overview of ProteinTuneRL's antibody infilling and optimization process</em></p>
+</div>
+
 ---
 
 ## 🔬 Key Features
