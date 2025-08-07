@@ -4,7 +4,14 @@ from protein_tune_rl import logger
 
 
 class IgLMKLScoring:
-    def __init__(self, model, ref_model, tokenizer):
+    def __init__(
+        self,
+        model,
+        ref_model,
+        tokenizer,
+        return_only_ref_model_scores=False,
+        reduction="sum",
+    ):
         """
         Parameters
         ----------
@@ -14,8 +21,12 @@ class IgLMKLScoring:
             Path or identifier for the reference model (pi_ref).
         """
 
-        # Initialize the primary model
-        self.primary_IgLMScoring = IgLMScoring(model, tokenizer)
+        self.return_only_ref_model_scores = return_only_ref_model_scores
+        self.reduction = reduction
+
+        if not self.return_only_ref_model_scores:
+            # Initialize the primary model
+            self.primary_IgLMScoring = IgLMScoring(model, tokenizer)
 
         # Initialize the reference model
         self.reference_IgLMScoring = IgLMScoring(ref_model, tokenizer)
@@ -24,8 +35,9 @@ class IgLMKLScoring:
         """
         Replace the current scoring model with a new one (e.g., the current training policy).
         """
-        logger.info("Updating IGLM model in KL scoring function")
-        self.primary_IgLMScoring.update_model(new_model)
+        if not self.return_only_ref_model_scores:
+            logger.info("Updating IGLM model in KL scoring function")
+            self.primary_IgLMScoring.update_model(new_model)
 
     def __call__(self, chains: Dict):
         """
@@ -51,16 +63,24 @@ class IgLMKLScoring:
         chain_token = "[HEAVY]"
         species_token = "[HUMAN]"
 
-        return self.primary_IgLMScoring.log_likelihood(
+        reference_scores = self.reference_IgLMScoring.log_likelihood(
             chains["H"],
             chain_token,
             species_token,
             infill_range=infill_range,
-            reduction="sum",
-        ) - self.reference_IgLMScoring.log_likelihood(
-            chains["H"],
-            chain_token,
-            species_token,
-            infill_range=infill_range,
-            reduction="sum",
+            reduction=self.reduction,
+        )
+
+        if self.return_only_ref_model_scores:
+            return reference_scores
+
+        return (
+            self.primary_IgLMScoring.log_likelihood(
+                chains["H"],
+                chain_token,
+                species_token,
+                infill_range=infill_range,
+                reduction=self.reduction,
+            )
+            - reference_scores
         )
