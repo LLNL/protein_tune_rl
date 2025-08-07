@@ -55,9 +55,10 @@ pip install -e '.'
 
 ### Example: Optimize CDR Loops with Online RL
 
+In `protein_tune_rl` directory, run the following command to optimize CDR loops using Proximal Policy Optimization (PPO):
+
 ```bash
-python protein_tune_rl/tune.py \
-  --config-file protein_tune_rl/configs/examples/ft_iglm_beta_sheet_ppo.json
+python tune.py --config-file configs/examples/ft_iglm_beta_sheet_ppo.json
 ```
 
 ---
