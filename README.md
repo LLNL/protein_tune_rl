@@ -47,6 +47,8 @@ At its core, ProteinTuneRL uses **IgLM** — a transformer-based infilling model
 
 ## 🚀 Quickstart
 
+Clone the repository and install the package:
+
 ```bash
 git clone https://github.com/LLNL/protein_tune_rl.git
 cd protein_tune_rl
