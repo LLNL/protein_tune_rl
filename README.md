@@ -67,7 +67,7 @@ pip install -e '.'
 
 ### 2) Install an infilling language model (IgLM)
 
-ProteinTuneRL expects an **infilling language model**. In our work we use **IgLM** ([https://github.com/Graylab/IgLM/tree/main](https://github.com/Graylab/IgLM/tree/main)).
+ProteinTuneRL expects an **infilling language model**. Currently, it is designed to work with **IgLM** ([https://github.com/Graylab/IgLM/tree/main](https://github.com/Graylab/IgLM/tree/main)), which is specifically tailored for antibody design tasks.
 
 **Option A — clone & install from source (recommended)**
 
@@ -105,15 +105,13 @@ export IGLM_DIR=/path/to/iglm/trained_models/IgLM-S
 
 This example fine-tunes IgLM with PPO on HCDR3 for a β-sheet objective.
 
-#### What you must set in the config
-
+**What you must set in the config**
 Update the IgLM paths to match your installation:
 
 * `tokenizer.tokenizer_config` → the IgLM model directory (e.g., `$IGLM_DIR`)
 * `policy_model.dir` → the same IgLM model directory
 
-#### Run
-  
+**Run**
 In `protein_tune_rl` directory, run the following command to optimize CDR loops using Proximal Policy Optimization (PPO):
 
 ```bash
