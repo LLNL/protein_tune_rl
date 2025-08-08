@@ -4,7 +4,7 @@
         "batch_size": 8,
         "max_length": 22,
         "check_point_freq": 2000,
-        "total_optimization_steps": 1000
+        "total_optimization_steps": 10
     },
     "experiment_directory": "test_run",
     "dataset": {
