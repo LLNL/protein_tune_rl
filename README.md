@@ -35,7 +35,7 @@ At its core, ProteinTuneRL uses **IgLM** — a transformer-based infilling model
 ## 🧠 How It Works
 
 1. **Infilling Model (IgLM)**
-   Protein sequences are modified using IgLM, which can "fill in" masked regions (like CDR loops) of user-defined length based on surrounding context.
+   Protein sequences are modified using IgLM, which can “fill in” masked regions (like CDR loops) of user-defined length based on surrounding context.
 
 2. **Online RL (PPO)**
    IgLM is fine-tuned using **Proximal Policy Optimization** to maximize a custom reward function while staying close to the original model.
@@ -68,36 +68,19 @@ pip install -e '.'
 ### 2) Install an infilling language model (IgLM)
 
 ProteinTuneRL expects an **infilling language model**. Currently, it is designed to work with **IgLM** ([https://github.com/Graylab/IgLM/tree/main](https://github.com/Graylab/IgLM/tree/main)), which is specifically tailored for antibody design tasks.
+ProteinTuneRL does **not** require the IgLM Python package to be installed.  It only needs a directory containing the **IgLM pretrained weights and tokenizer files**. All examples assume a single path (referred to as `IGLM_DIR`) that points to such a directory.
 
-**Option A — clone & install from source (recommended)**
+**Option A — Clone IgLM to obtain the weights (no install)**
 
 ```bash
+# You can clone this anywhere (inside or outside this repo)
 git clone https://github.com/Graylab/IgLM.git
-cd IgLM
-pip install -e .
-# Make note of (or download) the pretrained model directory, e.g. iglm/trained_models/IgLM-S
+# Use the pretrained weights shipped in the repo, e.g.:
+# IgLM/trained_models/IgLM-S
 ```
 
-**Option B — pip install**
-If IgLM is available via pip for your environment:
-
-```bash
-pip install iglm
-```
-
-(or, if preferred, install directly from GitHub)
-
-```bash
-pip install "git+https://github.com/Graylab/IgLM.git"
-```
-
-Set an environment variable pointing to the model directory (adjust the path to your install):
-
-```bash
-export IGLM_DIR=/path/to/iglm/trained_models/IgLM-S
-# Windows PowerShell:
-# $env:IGLM_DIR="C:\path\to\iglm\trained_models\IgLM-S"
-```
+**Option B — Use any existing weights directory**
+If you already have IgLM weights (e.g., downloaded elsewhere), just note the absolute path to that directory.
 
 ---
 
