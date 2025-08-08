@@ -47,7 +47,17 @@ At its core, ProteinTuneRL uses **IgLM** — a transformer-based infilling model
 
 ## 🚀 Quickstart
 
-Clone the repository and install the package:
+### 1) Create a Python environment
+
+Using **venv**:
+
+```bash
+python3.9 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m pip install -U pip
+```
+
+Now install ProteinTuneRL:
 
 ```bash
 git clone https://github.com/LLNL/protein_tune_rl.git
@@ -55,12 +65,59 @@ cd protein_tune_rl
 pip install -e '.'
 ```
 
+### 2) Install an infilling language model (IgLM)
+
+ProteinTuneRL expects an **infilling language model**. In our work we use **IgLM** ([https://github.com/Graylab/IgLM/tree/main](https://github.com/Graylab/IgLM/tree/main)).
+
+**Option A — clone & install from source (recommended)**
+
+```bash
+git clone https://github.com/Graylab/IgLM.git
+cd IgLM
+pip install -e .
+# Make note of (or download) the pretrained model directory, e.g. iglm/trained_models/IgLM-S
+```
+
+**Option B — pip install**
+If IgLM is available via pip for your environment:
+
+```bash
+pip install iglm
+```
+
+(or, if preferred, install directly from GitHub)
+
+```bash
+pip install "git+https://github.com/Graylab/IgLM.git"
+```
+
+Set an environment variable pointing to the model directory (adjust the path to your install):
+
+```bash
+export IGLM_DIR=/path/to/iglm/trained_models/IgLM-S
+# Windows PowerShell:
+# $env:IGLM_DIR="C:\path\to\iglm\trained_models\IgLM-S"
+```
+
+---
+
 ### Example: Optimize CDR Loops with Online RL
 
+This example fine-tunes IgLM with PPO on HCDR3 for a β-sheet objective.
+
+#### What you must set in the config
+
+Update the IgLM paths to match your installation:
+
+* `tokenizer.tokenizer_config` → the IgLM model directory (e.g., `$IGLM_DIR`)
+* `policy_model.dir` → the same IgLM model directory
+
+#### Run
+  
 In `protein_tune_rl` directory, run the following command to optimize CDR loops using Proximal Policy Optimization (PPO):
 
 ```bash
-python tune.py --config-file configs/examples/ft_iglm_beta_sheet_ppo.json
+python tune.py --config-file configs/examples/ppo_iglm_hcdr3_beta_sheet.json
 ```
 
 ---
