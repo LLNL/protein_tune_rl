@@ -95,10 +95,10 @@ Update the IgLM paths to match your installation:
 * `policy_model.dir` → the same IgLM model directory
 
 **Run**
-In `protein_tune_rl` directory, run the following command to optimize CDR loops using Proximal Policy Optimization (PPO):
+Run the following command to optimize CDR loops using Proximal Policy Optimization (PPO):
 
 ```bash
-python tune.py --config-file configs/examples/ppo_iglm_hcdr3_beta_sheet.json
+python protein_tune_rl/tune.py --config-file configs/examples/ppo_iglm_hcdr3_beta_sheet.json
 ```
 
 ---
