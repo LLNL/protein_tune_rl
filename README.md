@@ -47,21 +47,26 @@ At its core, ProteinTuneRL uses **IgLM** — a transformer-based infilling model
 
 ## 🚀 Quickstart
 
-### 1) Create a Python environment
+### 1) Clone the repository and create a Python environment
 
-Using **venv**:
-
-```bash
-python3.9 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-python -m pip install -U pip
-```
-
-Now install ProteinTuneRL:
+First, clone ProteinTuneRL:
 
 ```bash
 git clone https://github.com/LLNL/protein_tune_rl.git
 cd protein_tune_rl
+````
+
+Then create and activate a Python environment (using **venv**):
+
+```bash
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m pip install -U pip
+```
+
+Finally, install ProteinTuneRL in editable mode:
+
+```bash
 pip install -e '.'
 ```
 
@@ -102,7 +107,7 @@ Templates live in `configs/examples/*_template.json`. Use the helper to substitu
 
 ```bash
 # From repo root; uses ./configs/examples by default
-python scripts/patch_iglm_dir.py --value "${IGLM_DIR}"
+python configs/examples/patch_iglm_dir.py --value "${IGLM_DIR}"
 # (Add --recursive if you’ve nested templates)
 ```
 
