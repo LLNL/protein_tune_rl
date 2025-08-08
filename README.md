@@ -147,6 +147,10 @@ isort protein_tune_rl
 
 ## 📄 License
 
-Released under the [MIT License](LICENSE). <br>
-SPDX-License-Identifier: MIT <br>
-LLNL-CODE-2006374
+This project is released under the **MIT License**. See [LICENSE](LICENSE) for the full text.  
+**SPDX-License-Identifier:** MIT  
+**LLNL-CODE-2006374**
+
+**Notes**
+- **Third-party dependencies and models** (e.g., **IgLM**) are distributed under their **own licenses**. Please review the upstream repositories for terms before use.
+- **Contributions** are accepted under the MIT license; by submitting a PR, you agree your changes may be redistributed under the project’s license.
