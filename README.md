@@ -65,7 +65,7 @@ cd protein_tune_rl
 pip install -e '.'
 ```
 
-### 2) Install an infilling language model (IgLM)
+### 2) Provide an Infilling Model Directory (IgLM **weights only**)
 
 ProteinTuneRL expects an **infilling language model**. Currently, it is designed to work with **IgLM** ([https://github.com/Graylab/IgLM/tree/main](https://github.com/Graylab/IgLM/tree/main)), which is specifically tailored for antibody design tasks.
 ProteinTuneRL does **not** require the IgLM Python package to be installed.  It only needs a directory containing the **IgLM pretrained weights and tokenizer files**. All examples assume a single path (referred to as `IGLM_DIR`) that points to such a directory.
