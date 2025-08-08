@@ -221,10 +221,15 @@ def main(config_file, runs, mode, num_procs):
         logger.info("Running in single-node mode (e.g. launched via mp.spawn)")
         os.environ["MASTER_ADDR"] = "localhost"
         if num_procs == -1:
-            num_procs = torch.cuda.device_count()
-            logger.info(
-                f"Auto-detected {num_procs} GPUs. Using all available GPUs for parallel processing."
-            )
+            gpu_count = torch.cuda.device_count()
+            if gpu_count > 0:
+                num_procs = gpu_count
+                logger.info(
+                    f"Auto-detected {num_procs} GPUs. Using all available GPUs for parallel processing."
+                )
+            else:
+                num_procs = 1
+                logger.info("No GPUs detected. Using single CPU process.")
         # Pytorch's mp.spawn will launch num_procs processes for DDP
         mp.spawn(
             experiment,
