@@ -9,7 +9,7 @@
 </div>
 
 ![Status](https://img.shields.io/badge/Status-Active-green.svg)
-![Python](https://img.shields.io/badge/Python-3.9-blue.svg)
+![Python](https://img.shields.io/badge/Python->=3.9-blue.svg)
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **ProteinTuneRL** is a flexible framework for protein sequence optimization using **infilling language models** and **reinforcement learning (RL)**. It supports general-purpose protein design and provides targeted tools for antibody engineering.
