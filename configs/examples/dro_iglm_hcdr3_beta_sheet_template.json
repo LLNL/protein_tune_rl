@@ -1,0 +1,108 @@
+{
+    "trainer": {
+        "name": "dro",
+        "total_optimization_steps": 10,
+        "batch_size": 3,
+        "check_point_freq": 5,
+        "learning_rate": 0.0001,
+        "tau": 0.75,
+        "optimizer": "adam",
+        "rescaling": true,
+        "mean_loss": true,
+        "evaluate_during_training": true,
+        "save_models": false
+    },
+    "experiment_directory": "test_run",
+    "dataset": {
+        "name": "dro",
+        "data_directory": "data/nos_data/training_data_v3.csv",
+        "chain": "HC",
+        "region": "HCDR3",
+        "reward": "norm_ss_perc_sheet"
+    },
+    "tokenizer": {
+        "name": "iglm_tokenizer",
+        "tokenizer_config": "${IGLM_DIR}",
+        "padding_side": "left"
+    },
+    "collator": {
+        "name": "dro_infilling",
+        "chain": "HC"
+    },
+    "policy_model": {
+        "name": "iglm",
+        "dir": "${IGLM_DIR}"
+    },
+    "value_model": {
+        "name": "iglm_linear",
+        "dir": "${IGLM_DIR}",
+        "train_all_params": true
+    },
+    "evaluator": {
+        "name": "iglm",
+        "batch_size": 1,
+        "model_name": "iglm",
+        "max_length": 22,
+        "use_cuda": true
+    },
+    "dataset_eval": {
+        "name": "infilling",
+        "data_directory": "data/nos_data/eval_data_50.csv",
+        "chain": "HC",
+        "region": "HCDR3"
+    },
+    "generator": {
+        "num_to_generate": 1,
+        "top_p": 1,
+        "temperature": 1,
+        "max_length": 150,
+        "bad_word_ids": [
+            [
+                0
+            ],
+            [
+                1
+            ],
+            [
+                3
+            ],
+            [
+                4
+            ],
+            [
+                25
+            ],
+            [
+                26
+            ],
+            [
+                27
+            ],
+            [
+                28
+            ],
+            [
+                29
+            ],
+            [
+                30
+            ],
+            [
+                31
+            ],
+            [
+                32
+            ]
+        ]
+    },
+    "metric": [
+        {
+            "name": "ss_perc_sheet",
+            "params": {
+                "mean": 0.3784639359426365,
+                "std": 0.017445864484741506
+            },
+            "use_generated": true
+        }
+    ]
+}

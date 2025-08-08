@@ -82,24 +82,55 @@ git clone https://github.com/Graylab/IgLM.git
 **Option B — Use any existing weights directory**
 If you already have IgLM weights (e.g., downloaded elsewhere), just note the absolute path to that directory.
 
----
-
-### Example: Optimize CDR Loops with Online RL
-
-This example fine-tunes IgLM with PPO on HCDR3 for a β-sheet objective.
-
-**What you must set in the config**
-Update the IgLM paths to match your installation:
-
-* `tokenizer.tokenizer_config` → the IgLM model directory (e.g., `$IGLM_DIR`)
-* `policy_model.dir` → the same IgLM model directory
-
-**Run**
-Run the following command to optimize CDR loops using Proximal Policy Optimization (PPO):
+Set an environment variable pointing to the model directory (adjust the path to your install):
 
 ```bash
-python protein_tune_rl/tune.py --config-file configs/examples/ppo_iglm_hcdr3_beta_sheet.json
+export IGLM_DIR=/path/to/iglm/trained_models/IgLM-S
+# Windows PowerShell:
+# $env:IGLM_DIR="C:\path\to\iglm\trained_models\IgLM-S"
 ```
+
+---
+
+## 🎯 Optimize CDR Loops with RL
+
+This example fine-tunes **IgLM** on **HCDR3** for a β-sheet objective using **online RL (PPO)** and shows the **offline RL (DRO)** variant too.
+
+### 1) Generate configs from templates
+
+Templates live in `configs/examples/*_template.json`. Use the helper to substitute the IgLM path and write the non-template files (same name without `"template"`):
+
+```bash
+# From repo root; uses ./configs/examples by default
+python scripts/patch_iglm_dir.py --value "${IGLM_DIR}"
+# (Add --recursive if you’ve nested templates)
+```
+
+This produces (examples):
+
+* `configs/examples/ppo_iglm_hcdr3_beta_sheet.json`
+* `configs/examples/dro_iglm_hcdr3_beta_sheet.json`
+
+> Open the generated file(s) to confirm `dataset.data_directory`, `experiment_directory`, and any task-specific settings match your setup.
+
+### 2) Run Online RL (PPO)
+
+```bash
+python protein_tune_rl/tune.py \
+  --config-file configs/examples/ppo_iglm_hcdr3_beta_sheet.json
+```
+
+### 3) Run Offline RL (DRO)
+
+```bash
+python protein_tune_rl/tune.py \
+  --config-file configs/examples/dro_iglm_hcdr3_beta_sheet.json
+```
+
+**Notes**
+
+* Both configs expect `tokenizer.tokenizer_config` and `policy_model.dir` to point to the same IgLM weights directory you set in `IGLM_DIR`.
+* If you prefer a different output location, edit `experiment_directory` in the generated config.
 
 ---
 
