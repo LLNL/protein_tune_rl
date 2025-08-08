@@ -15,7 +15,7 @@
     "experiment_directory": "test_run",
     "dataset": {
         "name": "dro",
-        "data_directory": "data/nos_data/training_data_v3.csv",
+        "data_directory": "data/examples/training_data_v3.csv",
         "chain": "HC",
         "region": "HCDR3",
         "reward": "norm_ss_perc_sheet"
@@ -47,7 +47,7 @@
     },
     "dataset_eval": {
         "name": "infilling",
-        "data_directory": "data/nos_data/eval_data_50_v3.csv",
+        "data_directory": "data/examples/eval_data_50_v3.csv",
         "chain": "HC",
         "region": "HCDR3"
     },

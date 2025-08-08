@@ -9,7 +9,7 @@
     "experiment_directory": "test_run",
     "dataset": {
         "name": "infilling",
-        "data_directory": "data/nos_data/training_data_v3.csv",
+        "data_directory": "data/examples/training_data_v3.csv",
         "chain": "HC",
         "region": "HCDR3"
     },
