@@ -209,6 +209,10 @@ def _set_device_and_print_device_info(rank):
     help="Number of parallel processes to launch (usually maps to GPUs). Use -1 to auto-detect GPU count.",
 )
 def main(config_file, runs, mode, num_procs):
+
+    # Make pre-spawn logs visible
+    logger.set_rank(0)
+
     # Try multi-node first — safe to fall back if not present
     jsm_rank = os.environ.get("JSM_NAMESPACE_RANK")
     jsm_size = os.environ.get("JSM_NAMESPACE_SIZE")
