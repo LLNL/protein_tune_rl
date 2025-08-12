@@ -275,13 +275,16 @@ class IGLMEvaluator(Evaluator):
         return gather_dataframes(eval_df, device=self.device)
 
     def _log_dataset_info(self):
-        dl, ddp = self.dataloader, dist.is_available() and dist.is_initialized()
-        w = dist.get_world_size() if ddp else 1
-        s = getattr(dl, "sampler", None)
-        n = len(s) if s else len(dl.dataset)
-        b = len(dl)
+        dataloader = self.dataloader
+        ddp_enabled = dist.is_available() and dist.is_initialized()
+        world_size = dist.get_world_size() if ddp_enabled else 1
+        sampler = getattr(dataloader, "sampler", None)
+        samples_per_rank = len(sampler) if sampler else len(dataloader.dataset)
+        batches_per_rank = len(dataloader)
         logger.info(
-            f"Eval: world={w}, bs=1, per-rank={n} samples/{b} batches, global_batches={b*w}"
+            f"Eval: world_size={world_size}, batch_size=1, "
+            f"per_rank={samples_per_rank} samples/{batches_per_rank} batches, "
+            f"global_batches_per_epoch={batches_per_rank * world_size}"
         )
 
     def _generate_sequences_if_needed(self, tokenized_batch):
