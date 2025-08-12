@@ -176,6 +176,9 @@ class DROTrainer(Trainer):
         logger.info(
             f"Breaking down the training dataset into {len(self.dataloader)} batches."
         )
+        logger.info(
+            f"Each process will handle {len(self.dataloader.dataset) // dist.get_world_size()} samples."
+        )
 
         current_step = 0
         while current_step < self.total_optimization_steps:
