@@ -178,7 +178,7 @@ class DROTrainer(Trainer):
         current_step = 0
         while current_step < self.total_optimization_steps:
             for batch_number, batch in enumerate(iter(self.dataloader)):
-                current_step = self._train_step(batch, current_step)
+                current_step = self._train_step(batch, current_step, batch_number)
                 self._log_step(log_df, output_dir, current_step, batch_number)
                 dist.barrier()
 
@@ -211,7 +211,8 @@ class DROTrainer(Trainer):
             f"batches/epoch={per_rank_batches * world}."
         )
 
-    def _train_step(self, batch, current_step):
+    def _train_step(self, batch, current_step, batch_number):
+        """Perform a single training step on the provided batch."""
         self.value.train()
         self.policy.train()
 
@@ -229,7 +230,7 @@ class DROTrainer(Trainer):
         self.value_optimizer.step()
 
         logger.info(
-            f"Step {current_step + 1}, Batch: Policy Loss: {policy_loss.item():.4f}, Value Loss: {value_loss.item():.4f}"
+            f"Step {current_step + 1}, Batch {batch_number + 1}: Policy Loss: {policy_loss.item():.4f}, Value Loss: {value_loss.item():.4f}"
         )
 
         self._last_policy_loss = policy_loss
