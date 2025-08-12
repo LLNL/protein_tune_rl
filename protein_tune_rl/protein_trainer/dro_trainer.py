@@ -194,10 +194,10 @@ class DROTrainer(Trainer):
 
     def _log_dataset_info(self):
         logger.info(
-            f"Breaking down the training dataset into {len(self.dataloader)} batches."
+            f"Each process will handle {len(self.dataloader.dataset) // dist.get_world_size()} samples."
         )
         logger.info(
-            f"Each process will handle {len(self.dataloader.dataset) // dist.get_world_size()} samples."
+            f"The load of each process is broken down into {len(self.dataloader)} batches."
         )
 
     def _train_step(self, batch, current_step):
