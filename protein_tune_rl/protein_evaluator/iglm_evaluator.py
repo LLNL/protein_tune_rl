@@ -248,6 +248,8 @@ class IGLMEvaluator(Evaluator):
             'light_chains': [],
         }
 
+        self._log_dataset_info()
+
         for batch_number, batch in enumerate(iter(self.dataloader)):
             self.policy.eval()
 
@@ -271,6 +273,14 @@ class IGLMEvaluator(Evaluator):
         # Create and save DataFrame
         eval_df = self._create_evaluation_dataframe(results)
         return gather_dataframes(eval_df, device=self.device)
+
+    def _log_dataset_info(self):
+        logger.info(
+            f"Breaking down the evaluation dataset into {len(self.dataloader)} batches."
+        )
+        logger.info(
+            f"Each process will handle {len(self.dataloader.dataset) // dist.get_world_size()} samples."
+        )
 
     def _generate_sequences_if_needed(self, tokenized_batch):
         """Generate sequences if any metric requires generated sequences."""
