@@ -150,6 +150,26 @@ isort protein_tune_rl
 
 ---
 
+## 📚 Citation
+
+If you use **ProteinTuneRL** in your work, please cite:
+
+```bibtex
+@article{Lee2025.08.08.669419,
+  author = {Lee, Chak Shing and Hayes, Conor F. and Vashchenko, Denis and Landajuela, Mikel},
+  title = {Reinforcement Learning for Antibody Sequence Infilling},
+  journal = {bioRxiv},
+  year = {2025},
+  elocation-id = {2025.08.08.669419},
+  doi = {10.1101/2025.08.08.669419},
+  publisher = {Cold Spring Harbor Laboratory},
+  url = {https://www.biorxiv.org/content/early/2025/08/12/2025.08.08.669419},
+  eprint = {https://www.biorxiv.org/content/early/2025/08/12/2025.08.08.669419.full.pdf}
+}
+```
+
+---
+
 ## 📄 License
 
 This project is released under the **MIT License**. See [LICENSE](LICENSE) for the full text.  
