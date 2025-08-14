@@ -152,7 +152,7 @@ isort protein_tune_rl
 
 ## 📚 Citation
 
-If you use **ProteinTuneRL** in your work, please cite:
+If you use **ProteinTuneRL** in your work, please cite [this paper](https://www.biorxiv.org/content/10.1101/2025.08.08.669419v1) as follows:
 
 ```bibtex
 @article{Lee2025.08.08.669419,
