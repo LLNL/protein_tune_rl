@@ -9,6 +9,7 @@ class DRODataset(InfillingDataset):
     def __getitem__(self, idx):
 
         return {
+            "__row_idx__": int(idx),
             "prompts": self.data[self.chain].iloc[idx],
             "completions": self.data[self.region].iloc[idx],
             "rewards": float(self.data[self.reward].iloc[idx]),
@@ -23,6 +24,7 @@ class DROEvalDataset(InfillingDataset):
     def __getitem__(self, idx):
 
         return {
+            "__row_idx__": int(idx),
             "prompts": self.data[self.chain].iloc[idx],
             "completions": self.data[self.region].iloc[idx],
             "LC": self.data.LC.iloc[idx],

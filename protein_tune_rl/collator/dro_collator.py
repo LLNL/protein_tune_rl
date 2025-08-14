@@ -169,6 +169,7 @@ class DROCollator:
 
         if self.eval:
             return {
+                "__row_idx__": batch["__row_idx__"],
                 "input_ids": tokenized_masked_prompts_with_completions,
                 "prompts": tokenized_masked_prompts,
                 "labels": input_mask,
@@ -178,6 +179,7 @@ class DROCollator:
             }
 
         return {
+            "__row_idx__": batch["__row_idx__"],
             "input_ids": tokenized_masked_prompts_with_completions,
             "prompts": tokenized_masked_prompts,
             "labels": input_mask,
