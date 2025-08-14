@@ -17,7 +17,7 @@ stages:
 default:
   tags:
     - slurm
-    - ruby
+    - borax
 
 .venv:
   script:
