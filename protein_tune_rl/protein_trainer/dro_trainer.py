@@ -159,9 +159,9 @@ class DROTrainer(Trainer):
 
         with torch.no_grad():
             eval_df = self.evaluator.run_with_ground_truth()
-            eval_df = eval_df.sort_values("__row_idx__").reset_index(drop=True)
 
         if dist.get_rank() == 0 and eval_df is not None:
+            eval_df = eval_df.sort_values("__row_idx__").reset_index(drop=True)
             eval_df.to_csv(
                 f"{output_dir}/evaluation_results_step_{current_step}.csv",
                 index=False,
