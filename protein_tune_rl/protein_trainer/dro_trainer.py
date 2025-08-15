@@ -161,6 +161,7 @@ class DROTrainer(Trainer):
             eval_df = self.evaluator.run_with_ground_truth()
 
         if dist.get_rank() == 0 and eval_df is not None:
+            eval_df = eval_df.sort_values("__row_idx__").reset_index(drop=True)
             eval_df.to_csv(
                 f"{output_dir}/evaluation_results_step_{current_step}.csv",
                 index=False,
@@ -173,67 +174,95 @@ class DROTrainer(Trainer):
         """Run the DRO Trainer for the specified number of optimization steps."""
         log_df = pd.DataFrame()
 
-        logger.info(
-            f"Breaking down the training dataset into {len(self.dataloader)} batches."
-        )
+        self._log_dataset_info()
 
         current_step = 0
         while current_step < self.total_optimization_steps:
             for batch_number, batch in enumerate(iter(self.dataloader)):
-                self.value.train()
-                self.policy.train()
-
-                self.policy_optimizer.zero_grad()
-                self.value_optimizer.zero_grad()
-
-                tokenized_batch = self.collator(batch)
-
-                policy_loss, value_loss = self.model_optimizer.calculate_loss(
-                    tokenized_batch
-                )
-
-                value_loss.backward()
-                policy_loss.backward()
-
-                self.policy_optimizer.step()
-                self.value_optimizer.step()
-
-                current_step += 1
-
-                logger.info(
-                    f"Step {current_step}, Batch {batch_number + 1}: "
-                    f"Policy Loss: {policy_loss.item():.4f}, "
-                    f"Value Loss: {value_loss.item():.4f}"
-                )
-
-                if dist.get_rank() == 0:
-                    step_log_df = pd.DataFrame.from_dict(
-                        {
-                            "step": [current_step],
-                            "policy_loss": [policy_loss.item()],
-                            "value_loss": [value_loss.item()],
-                        }
-                    )
-
-                    log_df = pd.concat([log_df, step_log_df])
-                    log_df.to_csv(f"{output_dir}/dro_trainer_log.csv", index=False)
+                current_step = self._train_step(batch, current_step, batch_number)
+                self._log_step(log_df, output_dir, current_step, batch_number)
                 dist.barrier()
 
-                if (current_step % self.check_point_freq == 0) and (current_step > 0):
-
-                    if self.config["trainer"].get("save_models", True):
-                        if dist.get_rank() == 0:
-                            self.save_models(output_dir, current_step)
-                        dist.barrier()
-
-                    # Run online evaluation if configured
-                    if self.config["trainer"].get("evaluate_during_training", False):
-                        self.run_evaluation(output_dir, current_step)
+                if self._should_checkpoint(current_step):
+                    self._maybe_save_models(output_dir, current_step)
+                    self._maybe_run_evaluation(output_dir, current_step)
 
                 if current_step >= self.total_optimization_steps:
                     break
 
-        # Final save after training completes
-        self.policy.module.save(output_dir / "models/final")
-
+        self._final_save(output_dir)
         return log_df
+
+    def _log_dataset_info(self):
+        dl = self.dataloader
+        world = (
+            dist.get_world_size()
+            if dist.is_available() and dist.is_initialized()
+            else 1
+        )
+        sampler = getattr(dl, "sampler", None)
+
+        per_rank_samples = len(sampler) if sampler is not None else len(dl.dataset)
+        per_rank_batches = len(dl)
+
+        logger.info(
+            f"Per-rank: {per_rank_samples} samples → {per_rank_batches} batches "
+            f"(batch size={dl.batch_size}, drop_last={dl.drop_last}); "
+            f"Global: world_size={world}, effective batch size={dl.batch_size * world}, "
+            f"batches/epoch={per_rank_batches * world}."
+        )
+
+    def _train_step(self, batch, current_step, batch_number):
+        """Perform a single training step on the provided batch."""
+        self.value.train()
+        self.policy.train()
+
+        self.policy_optimizer.zero_grad()
+        self.value_optimizer.zero_grad()
+
+        tokenized_batch = self.collator(batch)
+
+        policy_loss, value_loss = self.model_optimizer.calculate_loss(tokenized_batch)
+
+        value_loss.backward()
+        policy_loss.backward()
+
+        self.policy_optimizer.step()
+        self.value_optimizer.step()
+
+        logger.info(
+            f"Step {current_step + 1}, Batch {batch_number + 1}: Policy Loss: {policy_loss.item():.4f}, Value Loss: {value_loss.item():.4f}"
+        )
+
+        self._last_policy_loss = policy_loss
+        self._last_value_loss = value_loss
+
+        return current_step + 1
+
+    def _log_step(self, log_df, output_dir, current_step, batch_number):
+        if dist.get_rank() == 0:
+            step_log_df = pd.DataFrame.from_dict(
+                {
+                    "step": [current_step],
+                    "policy_loss": [self._last_policy_loss.item()],
+                    "value_loss": [self._last_value_loss.item()],
+                }
+            )
+            log_df = pd.concat([log_df, step_log_df])
+            log_df.to_csv(f"{output_dir}/dro_trainer_log.csv", index=False)
+
+    def _should_checkpoint(self, current_step):
+        return (current_step % self.check_point_freq == 0) and (current_step > 0)
+
+    def _maybe_save_models(self, output_dir, current_step):
+        if self.config["trainer"].get("save_models", True):
+            if dist.get_rank() == 0:
+                self.save_models(output_dir, current_step)
+            dist.barrier()
+
+    def _maybe_run_evaluation(self, output_dir, current_step):
+        if self.config["trainer"].get("evaluate_during_training", False):
+            self.run_evaluation(output_dir, current_step)
+
+    def _final_save(self, output_dir):
+        self.policy.module.save(output_dir / "models/final")

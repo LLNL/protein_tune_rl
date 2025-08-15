@@ -246,7 +246,10 @@ class IGLMEvaluator(Evaluator):
             'generated_sequences': [],
             'heavy_chains': [],
             'light_chains': [],
+            '__row_idx__': [],
         }
+
+        self._log_dataset_info()
 
         for batch_number, batch in enumerate(iter(self.dataloader)):
             self.policy.eval()
@@ -271,6 +274,19 @@ class IGLMEvaluator(Evaluator):
         # Create and save DataFrame
         eval_df = self._create_evaluation_dataframe(results)
         return gather_dataframes(eval_df, device=self.device)
+
+    def _log_dataset_info(self):
+        dataloader = self.dataloader
+        ddp_enabled = dist.is_available() and dist.is_initialized()
+        world_size = dist.get_world_size() if ddp_enabled else 1
+        sampler = getattr(dataloader, "sampler", None)
+        samples_per_rank = len(sampler) if sampler else len(dataloader.dataset)
+        batches_per_rank = len(dataloader)
+        logger.info(
+            f"Eval: world_size={world_size}, batch_size=1, "
+            f"per_rank={samples_per_rank} samples/{batches_per_rank} batches, "
+            f"global_batches_per_epoch={batches_per_rank * world_size}"
+        )
 
     def _generate_sequences_if_needed(self, tokenized_batch):
         """Generate sequences if any metric requires generated sequences."""
@@ -405,6 +421,7 @@ class IGLMEvaluator(Evaluator):
             + "[MASK]"
             + tokenized_batch["seq_post_mask"][0]
         )
+        results['__row_idx__'].append(int(tokenized_batch["__row_idx__"][0]))
 
     def _create_evaluation_dataframe(self, results):
         """Create DataFrame from collected results."""
@@ -413,6 +430,7 @@ class IGLMEvaluator(Evaluator):
         eval_df['HC'] = results['heavy_chains']
         eval_df['LC'] = results['light_chains']
         eval_df['prompts'] = results['prompts']
+        eval_df['__row_idx__'] = results['__row_idx__']
 
         for idx, metric in enumerate(self.config['metric']):
             eval_df[str(metric['name'])] = [
