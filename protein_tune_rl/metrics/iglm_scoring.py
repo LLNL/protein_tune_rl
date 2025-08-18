@@ -10,9 +10,10 @@ from protein_tune_rl import logger
 
 def get_seq_length(seq):
     """
-    Returns the length of a string or a list of strings.
-    If seq is a list, returns a list of lengths.
-    If seq is a string, returns its length.
+    Some of the sequence preparation functions return a list of sequences,
+    e.g. chains["seq_pre_mask"] = ['EVQLVESGGGLVQP ... TAVYYCAR']
+    This function returns the length of the first sequence in the list.
+    If the input is a single sequence, it returns its length.
     """
     if isinstance(seq, list):
         return len(seq[0]) if seq else 0
