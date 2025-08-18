@@ -253,13 +253,7 @@ class IGLMEvaluator(Evaluator):
 
         for batch_number, batch in enumerate(iter(self.dataloader)):
             self.policy.eval()
-
-            #########################################################
-            # HACK: June 29, 2025
-            # substitute the key "region" in batch for "completions"
-            if "region" in batch:
-                batch["completions"] = batch.pop("region")
-            #########################################################
+            self._normalize_batch_keys(batch)
 
             tokenized_batch = self.collator(batch)
 
@@ -438,3 +432,10 @@ class IGLMEvaluator(Evaluator):
             ]
 
         return eval_df
+
+    def _normalize_batch_keys(self, batch):
+        """Ensure batch keys are consistent across collators."""
+        # InfillingCollator uses "region" instead of "completions"
+        # DROCollator uses "completions" directly
+        if "region" in batch:
+            batch["completions"] = batch.pop("region")
