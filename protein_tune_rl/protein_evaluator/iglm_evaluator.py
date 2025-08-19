@@ -253,13 +253,7 @@ class IGLMEvaluator(Evaluator):
 
         for batch_number, batch in enumerate(iter(self.dataloader)):
             self.policy.eval()
-
-            #########################################################
-            # HACK: June 29, 2025
-            # substitute the key "region" in batch for "completions"
-            if "region" in batch:
-                batch["completions"] = batch.pop("region")
-            #########################################################
+            self._normalize_batch_keys(batch)
 
             tokenized_batch = self.collator(batch)
 
@@ -312,6 +306,7 @@ class IGLMEvaluator(Evaluator):
     ):
         """Process all samples in a batch and collect results."""
         for idx in range(len(batch["LC"])):
+            # Create ground truth chains for this sample
             gt_chains = self._create_ground_truth_chains(batch, idx, tokenized_batch)
 
             # Get generated sequences for this sample
@@ -324,14 +319,22 @@ class IGLMEvaluator(Evaluator):
                 gt_chains, batch, idx, tokenized_batch, full_sampled_sequences
             )
 
-            # Some logging for debugging
-            logger.info(
-                f"Rank {dist.get_rank()}; "
-                f"Batch {batch_number + 1}, "
-                f"Sampled Sequence: {full_sampled_sequences}, "
-                f"Infilling: {infilled_sequences}, "
-                f"Score: {current_metric_scores}"
-            )
+            # Logging for debugging
+            if full_sampled_sequences:
+                logger.info(
+                    f"Rank {dist.get_rank()}; "
+                    f"Batch {batch_number + 1}, "
+                    f"Sampled Sequence: {full_sampled_sequences}, "
+                    f"Infilling: {infilled_sequences}, "
+                    f"Score: {current_metric_scores}"
+                )
+            else:
+                logger.info(
+                    f"Rank {dist.get_rank()}; "
+                    f"Batch {batch_number + 1}, "
+                    f"Ground Truth Sequence: {gt_chains['H']}, "
+                    f"Score: {current_metric_scores}"
+                )
 
             # Collect results
             self._collect_sample_results(
@@ -438,3 +441,10 @@ class IGLMEvaluator(Evaluator):
             ]
 
         return eval_df
+
+    def _normalize_batch_keys(self, batch):
+        """Ensure batch keys are consistent across collators."""
+        # InfillingCollator uses "region" instead of "completions"
+        # DROCollator uses "completions" directly
+        if "region" in batch:
+            batch["completions"] = batch.pop("region")

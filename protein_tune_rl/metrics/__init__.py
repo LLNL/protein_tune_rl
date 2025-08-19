@@ -45,6 +45,13 @@ def create_metric(name):
 
             return IgLMKLScoring
 
+        if name == "iglm_tokenwise_kl":
+            from protein_tune_rl.metrics.iglm_tokenwise_kl import (
+                IgLMTokenwiseKLDivergence,
+            )
+
+            return IgLMTokenwiseKLDivergence
+
         raise ValueError(f"Unknown metric name: {name}")
     except Exception as e:
         raise RuntimeError(f"Failed to create metric '{name}': {e}") from e

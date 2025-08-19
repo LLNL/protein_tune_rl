@@ -1,5 +1,5 @@
 from typing import Dict
-from protein_tune_rl.metrics.iglm_scoring import IgLMScoring
+from protein_tune_rl.metrics.iglm_scoring import IgLMScoring, get_seq_length
 from protein_tune_rl import logger
 
 
@@ -55,9 +55,13 @@ class IgLMKLScoring:
             KL(p_theta(x) || p_ref(x)) = E_{p_theta(x)}[log p_theta(x) - log p_ref(x)]
         """
 
+        chains_seq_pre_mask_length = get_seq_length(chains["seq_pre_mask"])
+        chains_seq_post_mask_length = get_seq_length(chains["seq_post_mask"])
+        chains_H_length = get_seq_length(chains["H"])
+
         infill_range = (
-            len(chains["seq_pre_mask"]),
-            len(chains["H"]) - len(chains["seq_post_mask"]),
+            chains_seq_pre_mask_length,
+            chains_H_length - chains_seq_post_mask_length,
         )
 
         chain_token = "[HEAVY]"
