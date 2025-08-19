@@ -127,6 +127,7 @@ class IgLMTokenwiseKLDivergence:
         """
         # Try a few attr names to keep this robust to minor refactors
         for attr in (
+            "token_logits_over_infill",  # preferred if available
             "logits",
             "get_logits",
             "token_logits",
