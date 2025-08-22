@@ -5,6 +5,11 @@ def create_collator(name, tokenizer, eval=False):
 
             return DROCollator(tokenizer=tokenizer, eval=eval)
 
+        if name == "dpo":
+            from protein_tune_rl.collator.dpo_collator import DPOCollator
+
+            return DPOCollator(tokenizer=tokenizer)
+
         if name == "infilling":
             from protein_tune_rl.collator.infilling_data_collator import (
                 InfillingCollator,
