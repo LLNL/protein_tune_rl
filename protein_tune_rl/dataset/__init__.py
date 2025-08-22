@@ -19,6 +19,11 @@ def create_dataset(name, data_directory, chain=None, region=None, reward=None):
                 data_directory=data_directory, chain=chain, region=region
             )
 
+        if name == "dpo":
+            from protein_tune_rl.dataset.dpo_dataset import DPODataset
+
+            return DPODataset(file_path=data_directory)
+
         if name == "infilling":
             from protein_tune_rl.dataset.infilling_dataset import InfillingDataset
 
