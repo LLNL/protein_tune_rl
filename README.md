@@ -132,6 +132,13 @@ python protein_tune_rl/tune.py \
   --config-file configs/examples/dro_iglm_hcdr3_beta_sheet.json
 ```
 
+### 4) Run Offline RL (DPO)
+
+```bash
+python protein_tune_rl/tune.py \
+  --config-file configs/examples/dpo_iglm_hcdr3_beta_sheet.json
+```
+
 **Notes**
 
 * Both configs expect `tokenizer.tokenizer_config` and `policy_model.dir` to point to the same IgLM weights directory you set in `IGLM_DIR`.
