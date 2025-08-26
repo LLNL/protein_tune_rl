@@ -169,9 +169,7 @@ class DPOTrainer(Trainer):
                     dist.barrier()
                     if self.config["trainer"].get("evaluate_during_training", False):
                         # Only run evaluation on one rank (rank 0) to avoid duplication
-                        if dist.get_rank() == 0:
-                            self.run_evaluation(output_dir, current_step)
-                        dist.barrier()
+                        self.run_evaluation(output_dir, current_step)
 
                 if current_step >= self.total_optimization_steps:
                     break
