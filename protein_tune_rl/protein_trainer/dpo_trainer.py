@@ -146,7 +146,7 @@ class DPOTrainer(Trainer):
     def run(self, output_dir):
         """Execute the training loop for DPO."""
         log_df = pd.DataFrame()
-        self._log_dataset_info()
+        self._log_dataset_info(self.dataloader, logger)
 
         current_step = 0
         # Iterate until reaching total optimization steps
@@ -178,24 +178,6 @@ class DPOTrainer(Trainer):
         if dist.get_rank() == 0:
             self.policy.module.save(output_dir / "models/final")
         return log_df
-
-    def _log_dataset_info(self):
-        # Log dataset and dataloader stats (similar to DROTrainer for transparency)
-        dl = self.dataloader
-        world = (
-            dist.get_world_size()
-            if dist.is_available() and dist.is_initialized()
-            else 1
-        )
-        sampler = getattr(dl, "sampler", None)
-        per_rank_samples = len(sampler) if sampler is not None else len(dl.dataset)
-        per_rank_batches = len(dl)
-        logger.info(
-            f"Per-rank: {per_rank_samples} samples → {per_rank_batches} batches "
-            f"(batch size={dl.batch_size}, drop_last={dl.drop_last}); "
-            f"Global: world_size={world}, effective batch size={dl.batch_size * world}, "
-            f"batches/epoch={per_rank_batches * world}."
-        )
 
     def _train_step(self, batch, current_step, batch_number):
         """Perform a single optimization step on the given batch."""
