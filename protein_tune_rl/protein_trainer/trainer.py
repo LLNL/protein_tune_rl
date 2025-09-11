@@ -28,3 +28,6 @@ class Trainer(ABC):
             f"Global: world_size={world}, effective batch size={dl.batch_size * world}, "
             f"batches/epoch={per_rank_batches * world}."
         )
+
+    def _should_checkpoint(self, current_step, check_point_freq):
+        return (current_step % check_point_freq == 0) and (current_step > 0)

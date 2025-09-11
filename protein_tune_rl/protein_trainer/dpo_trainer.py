@@ -161,7 +161,7 @@ class DPOTrainer(Trainer):
                 dist.barrier()
 
                 # Checkpointing and evaluation
-                if self._should_checkpoint(current_step):
+                if self._should_checkpoint(current_step, self.check_point_freq):
                     if dist.get_rank() == 0 and self.config["trainer"].get(
                         "save_models", True
                     ):
@@ -217,6 +217,3 @@ class DPOTrainer(Trainer):
             }
             log_df = pd.concat([log_df, pd.DataFrame([step_data])], ignore_index=True)
             log_df.to_csv(f"{output_dir}/dpo_trainer_log.csv", index=False)
-
-    def _should_checkpoint(self, current_step):
-        return (current_step % self.check_point_freq == 0) and (current_step > 0)
