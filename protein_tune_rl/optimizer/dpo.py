@@ -105,6 +105,10 @@ class DPO:
         )  # [B] Equivalent to : (pi_pos - pi_neg) - (ref_pos - ref_neg)
         policy_loss = F.softplus(-self.beta * diff).mean()  # == -log σ(β*diff)
 
+        # Interpretation: we want pi_pos - pi_neg to be larger than ref_pos - ref_neg by a margin of 1/beta.
+        # Typically, ref_pos - ref_neg is close to 0, so we want pi_pos - pi_neg to be positive and large.
+        # (the larger beta is, the stronger the margin)
+
         # Optional metric: pairwise accuracy (don’t cast to int before mean!)
         # pair_acc = (diff > 0).float().mean().item()
 
