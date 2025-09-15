@@ -107,18 +107,16 @@ class DPOCollator:
             combined_neg_ids = torch.cat([prompt_ids, neg_comp_ids])
 
             # Create label masks for positive and negative sequences.
-            # We mark positions of the completion tokens (excluding the final [CLS]) with their token IDs, and others as -100.
-            # Length of combined sequence minus 1 (we exclude the last [CLS] token from prediction)
-            seq_len_pos = combined_pos_ids.size(0)
-            seq_len_neg = combined_neg_ids.size(0)
-            mask_len_pos = seq_len_pos - 1
-            mask_len_neg = seq_len_neg - 1
+            # We mark positions of the completion tokens (including the final [CLS]) with their token IDs, and others as -100.
+            # Length of combined sequence minus 1 (we include the last [CLS] token from prediction)
+            mask_len_pos = combined_pos_ids.size(0)
+            mask_len_neg = combined_neg_ids.size(0)
 
             # Initialize label arrays with -100 for all positions that will not be predicted
             labels_pos = [-100] * mask_len_pos
             labels_neg = [-100] * mask_len_neg
 
-            # Determine how many tokens belong to the completion (excluding [CLS]):
+            # Determine how many tokens belong to the completion (including [CLS]):
             # It's (len(completion_ids) - 1) since completion includes [CLS]
             comp_token_count_pos = (
                 pos_comp_ids.size(0) - 1
@@ -127,11 +125,13 @@ class DPOCollator:
 
             # Fill in the actual token IDs for completion tokens in the label mask (align these to the end of the sequence)
             if comp_token_count_pos > 0:
-                labels_pos[-comp_token_count_pos:] = pos_comp_ids[
-                    :-1
-                ].tolist()  # all tokens except [CLS]
+                labels_pos[
+                    -(comp_token_count_pos + 1) :
+                ] = pos_comp_ids.tolist()  # include [CLS]
             if comp_token_count_neg > 0:
-                labels_neg[-comp_token_count_neg:] = neg_comp_ids[:-1].tolist()
+                labels_neg[
+                    -(comp_token_count_neg + 1) :
+                ] = neg_comp_ids.tolist()  # include [CLS]
 
             # Convert to tensors
             labels_pos_tensor = torch.tensor(labels_pos, dtype=torch.long)
