@@ -99,8 +99,10 @@ class DPO:
         ref_pos = seq_logprob(ref_logits_pos, labels_pos, mask_pos)  # log πref(y+|x)
         ref_neg = seq_logprob(ref_logits_neg, labels_neg, mask_neg)  # log πref(y-|x)
 
-        # 8) DPO margin and loss:  L = - E[ log σ(β * ( (πθ-πθ) - (πref-πref) )) ]
-        diff = (pi_pos - pi_neg) - (ref_pos - ref_neg)  # [B]
+        # 8) DPO margin and loss:  L = - E[ log σ(β * ( (log πθ(y+|x) - log πref(y+|x)) - (log πθ(y-|x) - log πref(y-|x)) )) ]
+        diff = (pi_pos - ref_pos) - (
+            pi_neg - ref_neg
+        )  # [B] Equivalent to : (pi_pos - pi_neg) - (ref_pos - ref_neg)
         policy_loss = F.softplus(-self.beta * diff).mean()  # == -log σ(β*diff)
 
         # Optional metric: pairwise accuracy (don’t cast to int before mean!)
