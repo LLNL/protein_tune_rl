@@ -116,22 +116,15 @@ class DPOCollator:
             labels_pos = [-100] * mask_len_pos
             labels_neg = [-100] * mask_len_neg
 
-            # Determine how many tokens belong to the completion (including [CLS]):
-            # It's (len(completion_ids) - 1) since completion includes [CLS]
-            comp_token_count_pos = (
-                pos_comp_ids.size(0) - 1
-            )  # number of amino acid tokens in pos completion
-            comp_token_count_neg = neg_comp_ids.size(0) - 1
+            def fill_labels(labels, comp_ids):
+                """Align the completion token IDs (including [CLS]) to the end of the label tensor."""
+                n_tokens = comp_ids.size(0)
+                if n_tokens > 0:
+                    labels[-n_tokens:] = comp_ids.tolist()
 
-            # Fill in the actual token IDs for completion tokens in the label mask (align these to the end of the sequence)
-            if comp_token_count_pos > 0:
-                labels_pos[
-                    -(comp_token_count_pos + 1) :
-                ] = pos_comp_ids.tolist()  # include [CLS]
-            if comp_token_count_neg > 0:
-                labels_neg[
-                    -(comp_token_count_neg + 1) :
-                ] = neg_comp_ids.tolist()  # include [CLS]
+            # Fill in the completion token IDs into the label masks
+            fill_labels(labels_pos, pos_comp_ids)
+            fill_labels(labels_neg, neg_comp_ids)
 
             # Convert to tensors
             labels_pos_tensor = torch.tensor(labels_pos, dtype=torch.long)
