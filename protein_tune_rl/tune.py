@@ -79,9 +79,9 @@ class ProteinTuneRL:
             lr = self.config['trainer']['learning_rate']
         else:
             lr = self.config['optimizer']['learning_rate']
-        if 'tau' in self.config['trainer']:
+        if 'tau' in self.config.get('trainer', {}):
             tau = self.config['trainer']['tau']
-        elif 'tau' in self.config['optimizer']:
+        elif 'optimizer' in self.config and 'tau' in self.config['optimizer']:
             tau = self.config['optimizer']['tau']
         else:
             tau = None

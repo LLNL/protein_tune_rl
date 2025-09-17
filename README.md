@@ -125,11 +125,18 @@ python protein_tune_rl/tune.py \
   --config-file configs/examples/ppo_iglm_hcdr3_beta_sheet.json
 ```
 
-### 3) Run Offline RL (DRO)
+### 3) Run Offline RL with Single Trajectory Dataset (DRO)
 
 ```bash
 python protein_tune_rl/tune.py \
   --config-file configs/examples/dro_iglm_hcdr3_beta_sheet.json
+```
+
+### 4) Run Offline RL with Preference Dataset (DPO)
+
+```bash
+python protein_tune_rl/tune.py \
+  --config-file configs/examples/dpo_iglm_hcdr3_beta_sheet.json
 ```
 
 **Notes**

@@ -3,7 +3,7 @@ import torch
 
 def create_trainer(name):
 
-    if name not in ["ppo", "test", "dro", "online_rl_trainer"]:
+    if name not in ["ppo", "test", "dro", "dpo", "online_rl_trainer"]:
         raise ValueError(f"Trainer {name} not supported")
 
     if name == "test":
@@ -15,6 +15,11 @@ def create_trainer(name):
         from protein_tune_rl.protein_trainer.dro_trainer import DROTrainer
 
         return DROTrainer
+
+    if name == "dpo":
+        from protein_tune_rl.protein_trainer.dpo_trainer import DPOTrainer
+
+        return DPOTrainer
 
     if name == "online_rl_trainer":
         from protein_tune_rl.protein_trainer.online_rl_trainer import OnlineRLTrainer

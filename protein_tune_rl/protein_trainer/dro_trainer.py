@@ -173,17 +173,21 @@ class DROTrainer(Trainer):
     def run(self, output_dir):
         """Run the DRO Trainer for the specified number of optimization steps."""
         log_df = pd.DataFrame()
-
-        self._log_dataset_info()
+        self._log_dataset_info(self.dataloader, logger)
 
         current_step = 0
         while current_step < self.total_optimization_steps:
             for batch_number, batch in enumerate(iter(self.dataloader)):
-                current_step = self._train_step(batch, current_step, batch_number)
-                self._log_step(log_df, output_dir, current_step, batch_number)
-                dist.barrier()
 
-                if self._should_checkpoint(current_step):
+                # Perform one training step
+                current_step = self._train_step(batch, current_step, batch_number)
+                # Log the step results
+                log_df = self._log_step(log_df, output_dir, current_step, batch_number)
+
+                if self._should_checkpoint(current_step, self.check_point_freq):
+                    if dist.get_rank() == 0:
+                        log_df.to_csv(f"{output_dir}/dro_trainer_log.csv", index=False)
+                    dist.barrier()
                     self._maybe_save_models(output_dir, current_step)
                     self._maybe_run_evaluation(output_dir, current_step)
 
@@ -192,25 +196,6 @@ class DROTrainer(Trainer):
 
         self._final_save(output_dir)
         return log_df
-
-    def _log_dataset_info(self):
-        dl = self.dataloader
-        world = (
-            dist.get_world_size()
-            if dist.is_available() and dist.is_initialized()
-            else 1
-        )
-        sampler = getattr(dl, "sampler", None)
-
-        per_rank_samples = len(sampler) if sampler is not None else len(dl.dataset)
-        per_rank_batches = len(dl)
-
-        logger.info(
-            f"Per-rank: {per_rank_samples} samples → {per_rank_batches} batches "
-            f"(batch size={dl.batch_size}, drop_last={dl.drop_last}); "
-            f"Global: world_size={world}, effective batch size={dl.batch_size * world}, "
-            f"batches/epoch={per_rank_batches * world}."
-        )
 
     def _train_step(self, batch, current_step, batch_number):
         """Perform a single training step on the provided batch."""
@@ -249,10 +234,7 @@ class DROTrainer(Trainer):
                 }
             )
             log_df = pd.concat([log_df, step_log_df])
-            log_df.to_csv(f"{output_dir}/dro_trainer_log.csv", index=False)
-
-    def _should_checkpoint(self, current_step):
-        return (current_step % self.check_point_freq == 0) and (current_step > 0)
+        return log_df
 
     def _maybe_save_models(self, output_dir, current_step):
         if self.config["trainer"].get("save_models", True):
