@@ -181,12 +181,12 @@ class DROTrainer(Trainer):
 
                 # Perform one training step
                 current_step = self._train_step(batch, current_step, batch_number)
+                # Log the step results
+                log_df = self._log_step(log_df, output_dir, current_step, batch_number)
 
                 if self._should_checkpoint(current_step, self.check_point_freq):
-                    # Log the step results
-                    log_df = self._log_step(
-                        log_df, output_dir, current_step, batch_number
-                    )
+                    if dist.get_rank() == 0:
+                        log_df.to_csv(f"{output_dir}/dro_trainer_log.csv", index=False)
                     dist.barrier()
                     self._maybe_save_models(output_dir, current_step)
                     self._maybe_run_evaluation(output_dir, current_step)
@@ -234,7 +234,6 @@ class DROTrainer(Trainer):
                 }
             )
             log_df = pd.concat([log_df, step_log_df])
-            log_df.to_csv(f"{output_dir}/dro_trainer_log.csv", index=False)
         return log_df
 
     def _maybe_save_models(self, output_dir, current_step):
