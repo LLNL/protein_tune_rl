@@ -156,11 +156,14 @@ class DPOTrainer(Trainer):
                 batch = self.collator(raw_batch)
                 # Perform one training step
                 current_step = self._train_step(batch, current_step, batch_idx)
+                # Log the step results
+                log_df = self._log_step(log_df, output_dir, current_step)
 
                 # Checkpointing and evaluation
                 if self._should_checkpoint(current_step, self.check_point_freq):
                     # Log the step results
-                    log_df = self._log_step(log_df, output_dir, current_step)
+                    if dist.get_rank() == 0:
+                        log_df.to_csv(f"{output_dir}/dpo_trainer_log.csv", index=False)
                     dist.barrier()
                     # Save model checkpoints
                     if dist.get_rank() == 0 and self.config["trainer"].get(
@@ -217,5 +220,4 @@ class DPOTrainer(Trainer):
                 "avg_margin": self._last_avg_margin,
             }
             log_df = pd.concat([log_df, pd.DataFrame([step_data])], ignore_index=True)
-            log_df.to_csv(f"{output_dir}/dpo_trainer_log.csv", index=False)
         return log_df
