@@ -100,17 +100,21 @@ class DPO:
         ref_neg = seq_logprob(ref_logits_neg, labels_neg, mask_neg)  # log πref(y-|x)
 
         # 8) DPO margin and loss:  L = - E[ log σ(β * ( (log πθ(y+|x) - log πref(y+|x)) - (log πθ(y-|x) - log πref(y-|x)) )) ]
-        diff = (pi_pos - ref_pos) - (
-            pi_neg - ref_neg
-        )  # [B] Equivalent to : (pi_pos - pi_neg) - (ref_pos - ref_neg)
+        diff = (pi_pos - ref_pos) - (pi_neg - ref_neg)  # [B]
+        # diff is equivalent to : (pi_pos - pi_neg) - (ref_pos - ref_neg)
+
+        # F.softplus(x) = log(1 + exp(x)) is a stable way to compute -log σ(-x)
         policy_loss = F.softplus(-self.beta * diff).mean()  # == -log σ(β*diff)
 
         # Interpretation: we want pi_pos - pi_neg to be larger than ref_pos - ref_neg by a margin of 1/beta.
         # Typically, ref_pos - ref_neg is close to 0, so we want pi_pos - pi_neg to be positive and large.
-        # (the larger beta is, the stronger the margin)
+        # (the smaller the beta, the larger the margin 1/beta)
 
-        # Optional metric: pairwise accuracy (don’t cast to int before mean!)
-        # pair_acc = (diff > 0).float().mean().item()
-
-        # (you can log pair_acc elsewhere)
-        return policy_loss, diff.detach()
+        return (
+            policy_loss,
+            diff.detach(),
+            pi_pos.detach(),
+            pi_neg.detach(),
+            ref_pos.detach(),
+            ref_neg.detach(),
+        )
