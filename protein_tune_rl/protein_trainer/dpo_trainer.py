@@ -234,9 +234,9 @@ class DPOTrainer(Trainer):
                 "pairwise_accuracy": self._last_pairwise_acc,
                 "avg_margin": self._last_avg_margin,
                 "pairwise_pi_accuracy": self._last_pairwise_pi_acc,
-                "avg_pi_margin": self._last_avg_margin,
+                "avg_pi_margin": self._last_avg_pi_margin,
                 "pairwise_ref_accuracy": self._last_pairwise_ref_acc,
-                "avg_ref_margin": self._last_avg_margin,
+                "avg_ref_margin": self._last_avg_ref_margin,
             }
             log_df = pd.concat([log_df, pd.DataFrame([step_data])], ignore_index=True)
         return log_df
