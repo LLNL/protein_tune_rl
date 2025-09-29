@@ -87,6 +87,7 @@ class DPOTrainer(Trainer):
             device=self.device,
             beta=self.beta,
             mask_all_tokens=config["trainer"].get("all_tokens", False),
+            length_normalize=config["trainer"].get("length_normalize", False),
         )
 
         # Setup optimizer for policy model parameters

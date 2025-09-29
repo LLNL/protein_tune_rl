@@ -12,7 +12,14 @@ def _pad_to_len(x: torch.Tensor, target_len: int, pad_id: int = 0) -> torch.Tens
 
 class DPO:
     def __init__(
-        self, policy, reference, tokenizer, device, beta=0.1, mask_all_tokens=False
+        self,
+        policy,
+        reference,
+        tokenizer,
+        device,
+        beta=0.1,
+        mask_all_tokens=False,
+        length_normalize: bool = False,
     ):
         """
         Direct Preference Optimization (DPO) optimizer.
@@ -25,6 +32,7 @@ class DPO:
             beta (float): Scaling factor β for the DPO loss.
             mask_all_tokens (bool): If True, compute log-probs over all tokens (including end-token);
                                      if False, only over infilled/masked tokens.
+            length_normalize (bool): If True, normalize log-probs by sequence length.
         """
         self.policy = policy
         self.reference = reference
@@ -32,6 +40,7 @@ class DPO:
         self.device = device
         self.beta = beta
         self.mask_all_tokens = mask_all_tokens
+        self.length_normalize = length_normalize
 
         # Grab the pad token ID (default to 0 if not set)
         self.PAD = (
@@ -97,9 +106,18 @@ class DPO:
         labels_neg[labels_neg == -100] = self.PAD
 
         # 7) Gather log-probs and sum over masked positions
-        def seq_logprob(logits, labels, mask):
-            lp = torch.gather(logits.log_softmax(-1), 2, labels.unsqueeze(2)).squeeze(2)
-            return (lp * mask).sum(dim=1)  # [B]
+        def seq_logprob(logits, labels, mask, eps: float = 1e-8):
+            # logits: [B, T, V], labels: [B, T], mask: [B, T] (bool)
+            lp = torch.gather(logits.log_softmax(-1), 2, labels.unsqueeze(2)).squeeze(
+                2
+            )  # [B, T]
+            m = mask.float()
+            token_sum = (lp * m).sum(dim=1)  # [B]
+            if self.length_normalize:
+                lengths = m.sum(dim=1).clamp_min(1.0)  # avoid div-by-zero
+                return token_sum / lengths
+            else:
+                return token_sum
 
         pi_pos = seq_logprob(policy_logits_pos, labels_pos, mask_pos)  # log πθ(y+|x)
         pi_neg = seq_logprob(policy_logits_neg, labels_neg, mask_neg)  # log πθ(y-|x)
