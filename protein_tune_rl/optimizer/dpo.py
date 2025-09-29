@@ -33,6 +33,13 @@ class DPO:
         self.beta = beta
         self.mask_all_tokens = mask_all_tokens
 
+        # Grab the pad token ID (default to 0 if not set)
+        self.PAD = (
+            self.tokenizer.pad_token_id
+            if self.tokenizer.pad_token_id is not None
+            else 0
+        )
+
     def calculate_loss(self, batch):
         # ---- Move, clone labels (we’ll edit -100 -> 0) ----
         input_ids_pos = batch["input_ids_pos"].to(self.device)
@@ -43,12 +50,12 @@ class DPO:
         B = input_ids_pos.size(0)
         # 1) Pad inputs to a common sequence length L
         L = max(input_ids_pos.size(1), input_ids_neg.size(1))
-        input_ids_pos = _pad_to_len(input_ids_pos, L, pad_id=0)
-        input_ids_neg = _pad_to_len(input_ids_neg, L, pad_id=0)
+        input_ids_pos = _pad_to_len(input_ids_pos, L, pad_id=self.PAD)
+        input_ids_neg = _pad_to_len(input_ids_neg, L, pad_id=self.PAD)
 
         # 2) Build attention masks and concat pos/neg -> one batch
-        att_pos = (input_ids_pos != 0).to(self.device).float()
-        att_neg = (input_ids_neg != 0).to(self.device).float()
+        att_pos = (input_ids_pos != self.PAD).to(self.device).float()
+        att_neg = (input_ids_neg != self.PAD).to(self.device).float()
         input_ids_cat = torch.cat([input_ids_pos, input_ids_neg], dim=0)  # [2B, L]
         att_cat = torch.cat([att_pos, att_neg], dim=0)  # [2B, L]
 
@@ -78,16 +85,16 @@ class DPO:
         ref_logits_neg = ref_logits_neg[:, :-1, :].contiguous()
 
         # Pad labels to L, then drop first label -> length L-1 (matches logits)
-        labels_pos = _pad_to_len(labels_pos, L, pad_id=0)[:, 1:].contiguous()
-        labels_neg = _pad_to_len(labels_neg, L, pad_id=0)[:, 1:].contiguous()
+        labels_pos = _pad_to_len(labels_pos, L, pad_id=self.PAD)[:, 1:].contiguous()
+        labels_neg = _pad_to_len(labels_neg, L, pad_id=self.PAD)[:, 1:].contiguous()
 
         # 6) Build loss masks over completion tokens only
-        mask_pos = (labels_pos != -100) & (labels_pos != 0)
-        mask_neg = (labels_neg != -100) & (labels_neg != 0)
+        mask_pos = (labels_pos != -100) & (labels_pos != self.PAD)
+        mask_neg = (labels_neg != -100) & (labels_neg != self.PAD)
 
         # Replace -100 with 0 to make indices safe for gather
-        labels_pos[labels_pos == -100] = 0
-        labels_neg[labels_neg == -100] = 0
+        labels_pos[labels_pos == -100] = self.PAD
+        labels_neg[labels_neg == -100] = self.PAD
 
         # 7) Gather log-probs and sum over masked positions
         def seq_logprob(logits, labels, mask):
