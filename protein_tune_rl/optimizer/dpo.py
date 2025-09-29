@@ -18,7 +18,6 @@ class DPO:
         tokenizer,
         device,
         beta=0.1,
-        mask_all_tokens=False,
         length_normalize: bool = False,
     ):
         """
@@ -30,8 +29,6 @@ class DPO:
             tokenizer: Tokenizer for the model (to obtain vocab size, special tokens, etc.).
             device (torch.device): Device to run computations on.
             beta (float): Scaling factor β for the DPO loss.
-            mask_all_tokens (bool): If True, compute log-probs over all tokens (including end-token);
-                                     if False, only over infilled/masked tokens.
             length_normalize (bool): If True, normalize log-probs by sequence length.
         """
         self.policy = policy
@@ -39,7 +36,6 @@ class DPO:
         self.tokenizer = tokenizer
         self.device = device
         self.beta = beta
-        self.mask_all_tokens = mask_all_tokens
         self.length_normalize = length_normalize
 
         # Grab the pad token ID (default to 0 if not set)
@@ -106,7 +102,7 @@ class DPO:
         labels_neg[labels_neg == -100] = self.PAD
 
         # 7) Gather log-probs and sum over masked positions
-        def seq_logprob(logits, labels, mask, eps: float = 1e-8):
+        def seq_logprob(logits, labels, mask):
             # logits: [B, T, V], labels: [B, T], mask: [B, T] (bool)
             lp = torch.gather(logits.log_softmax(-1), 2, labels.unsqueeze(2)).squeeze(
                 2

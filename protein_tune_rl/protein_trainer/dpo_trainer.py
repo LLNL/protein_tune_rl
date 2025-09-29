@@ -86,7 +86,6 @@ class DPOTrainer(Trainer):
             tokenizer=self.tokenizer,
             device=self.device,
             beta=self.beta,
-            mask_all_tokens=config["trainer"].get("all_tokens", False),
             length_normalize=config["trainer"].get("length_normalize", False),
         )
 
