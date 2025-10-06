@@ -86,7 +86,7 @@ class DPOTrainer(Trainer):
             tokenizer=self.tokenizer,
             device=self.device,
             beta=self.beta,
-            mask_all_tokens=config["trainer"].get("all_tokens", False),
+            length_normalize=config["trainer"].get("length_normalize", False),
         )
 
         # Setup optimizer for policy model parameters
@@ -189,15 +189,26 @@ class DPOTrainer(Trainer):
         self.policy_optimizer.zero_grad()
 
         # Calculate DPO loss
-        policy_loss, diff = self.model_optimizer.calculate_loss(batch)
+        (
+            policy_loss,
+            diff,
+            pi_pos,
+            pi_neg,
+            ref_pos,
+            ref_neg,
+        ) = self.model_optimizer.calculate_loss(batch)
         policy_loss.backward()
         self.policy_optimizer.step()
 
         # Compute training metrics
-        # Pairwise accuracy: fraction of pairs where model assigns higher score to y⁺
-        # Note: 'bool' object has no attribute 'float'
+        # Pairwise accuracy: fraction of pairs where positive log-prob > negative log-prob
         pairwise_acc = (diff > 0).float().mean().item()
         avg_margin = diff.mean().item()
+
+        pairwise_pi_acc = (pi_pos > pi_neg).float().mean().item()
+        avg_pi_margin = (pi_pos - pi_neg).mean().item()
+        pairwise_ref_acc = (ref_pos > ref_neg).float().mean().item()
+        avg_ref_margin = (ref_pos - ref_neg).mean().item()
 
         logger.info(
             f"Step {current_step + 1}, Batch {batch_number + 1}: "
@@ -208,6 +219,10 @@ class DPOTrainer(Trainer):
         self._last_policy_loss = policy_loss.item()
         self._last_pairwise_acc = pairwise_acc
         self._last_avg_margin = avg_margin
+        self._last_pairwise_pi_acc = pairwise_pi_acc
+        self._last_avg_pi_margin = avg_pi_margin
+        self._last_pairwise_ref_acc = pairwise_ref_acc
+        self._last_avg_ref_margin = avg_ref_margin
         return current_step + 1
 
     def _log_step(self, log_df, output_dir, current_step):
@@ -218,6 +233,10 @@ class DPOTrainer(Trainer):
                 "policy_loss": self._last_policy_loss,
                 "pairwise_accuracy": self._last_pairwise_acc,
                 "avg_margin": self._last_avg_margin,
+                "pairwise_pi_accuracy": self._last_pairwise_pi_acc,
+                "avg_pi_margin": self._last_avg_pi_margin,
+                "pairwise_ref_accuracy": self._last_pairwise_ref_acc,
+                "avg_ref_margin": self._last_avg_ref_margin,
             }
             log_df = pd.concat([log_df, pd.DataFrame([step_data])], ignore_index=True)
         return log_df

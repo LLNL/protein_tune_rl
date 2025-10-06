@@ -12,7 +12,13 @@ def _pad_to_len(x: torch.Tensor, target_len: int, pad_id: int = 0) -> torch.Tens
 
 class DPO:
     def __init__(
-        self, policy, reference, tokenizer, device, beta=0.1, mask_all_tokens=False
+        self,
+        policy,
+        reference,
+        tokenizer,
+        device,
+        beta=0.1,
+        length_normalize: bool = False,
     ):
         """
         Direct Preference Optimization (DPO) optimizer.
@@ -23,15 +29,21 @@ class DPO:
             tokenizer: Tokenizer for the model (to obtain vocab size, special tokens, etc.).
             device (torch.device): Device to run computations on.
             beta (float): Scaling factor β for the DPO loss.
-            mask_all_tokens (bool): If True, compute log-probs over all tokens (including end-token);
-                                     if False, only over infilled/masked tokens.
+            length_normalize (bool): If True, normalize log-probs by sequence length.
         """
         self.policy = policy
         self.reference = reference
         self.tokenizer = tokenizer
         self.device = device
         self.beta = beta
-        self.mask_all_tokens = mask_all_tokens
+        self.length_normalize = length_normalize
+
+        # Grab the pad token ID (default to 0 if not set)
+        self.PAD = (
+            self.tokenizer.pad_token_id
+            if self.tokenizer.pad_token_id is not None
+            else 0
+        )
 
     def calculate_loss(self, batch):
         # ---- Move, clone labels (we’ll edit -100 -> 0) ----
@@ -43,12 +55,12 @@ class DPO:
         B = input_ids_pos.size(0)
         # 1) Pad inputs to a common sequence length L
         L = max(input_ids_pos.size(1), input_ids_neg.size(1))
-        input_ids_pos = _pad_to_len(input_ids_pos, L, pad_id=0)
-        input_ids_neg = _pad_to_len(input_ids_neg, L, pad_id=0)
+        input_ids_pos = _pad_to_len(input_ids_pos, L, pad_id=self.PAD)
+        input_ids_neg = _pad_to_len(input_ids_neg, L, pad_id=self.PAD)
 
         # 2) Build attention masks and concat pos/neg -> one batch
-        att_pos = (input_ids_pos != 0).to(self.device).float()
-        att_neg = (input_ids_neg != 0).to(self.device).float()
+        att_pos = (input_ids_pos != self.PAD).to(self.device).float()
+        att_neg = (input_ids_neg != self.PAD).to(self.device).float()
         input_ids_cat = torch.cat([input_ids_pos, input_ids_neg], dim=0)  # [2B, L]
         att_cat = torch.cat([att_pos, att_neg], dim=0)  # [2B, L]
 
@@ -78,21 +90,30 @@ class DPO:
         ref_logits_neg = ref_logits_neg[:, :-1, :].contiguous()
 
         # Pad labels to L, then drop first label -> length L-1 (matches logits)
-        labels_pos = _pad_to_len(labels_pos, L, pad_id=0)[:, 1:].contiguous()
-        labels_neg = _pad_to_len(labels_neg, L, pad_id=0)[:, 1:].contiguous()
+        labels_pos = _pad_to_len(labels_pos, L, pad_id=self.PAD)[:, 1:].contiguous()
+        labels_neg = _pad_to_len(labels_neg, L, pad_id=self.PAD)[:, 1:].contiguous()
 
         # 6) Build loss masks over completion tokens only
-        mask_pos = (labels_pos != -100) & (labels_pos != 0)
-        mask_neg = (labels_neg != -100) & (labels_neg != 0)
+        mask_pos = (labels_pos != -100) & (labels_pos != self.PAD)
+        mask_neg = (labels_neg != -100) & (labels_neg != self.PAD)
 
         # Replace -100 with 0 to make indices safe for gather
-        labels_pos[labels_pos == -100] = 0
-        labels_neg[labels_neg == -100] = 0
+        labels_pos[labels_pos == -100] = self.PAD
+        labels_neg[labels_neg == -100] = self.PAD
 
         # 7) Gather log-probs and sum over masked positions
         def seq_logprob(logits, labels, mask):
-            lp = torch.gather(logits.log_softmax(-1), 2, labels.unsqueeze(2)).squeeze(2)
-            return (lp * mask).sum(dim=1)  # [B]
+            # logits: [B, T, V], labels: [B, T], mask: [B, T] (bool)
+            lp = torch.gather(logits.log_softmax(-1), 2, labels.unsqueeze(2)).squeeze(
+                2
+            )  # [B, T]
+            m = mask.float()
+            token_sum = (lp * m).sum(dim=1)  # [B]
+            if self.length_normalize:
+                lengths = m.sum(dim=1).clamp_min(1.0)  # avoid div-by-zero
+                return token_sum / lengths
+            else:
+                return token_sum
 
         pi_pos = seq_logprob(policy_logits_pos, labels_pos, mask_pos)  # log πθ(y+|x)
         pi_neg = seq_logprob(policy_logits_neg, labels_neg, mask_neg)  # log πθ(y-|x)
@@ -100,17 +121,21 @@ class DPO:
         ref_neg = seq_logprob(ref_logits_neg, labels_neg, mask_neg)  # log πref(y-|x)
 
         # 8) DPO margin and loss:  L = - E[ log σ(β * ( (log πθ(y+|x) - log πref(y+|x)) - (log πθ(y-|x) - log πref(y-|x)) )) ]
-        diff = (pi_pos - ref_pos) - (
-            pi_neg - ref_neg
-        )  # [B] Equivalent to : (pi_pos - pi_neg) - (ref_pos - ref_neg)
+        diff = (pi_pos - ref_pos) - (pi_neg - ref_neg)  # [B]
+        # diff is equivalent to : (pi_pos - pi_neg) - (ref_pos - ref_neg)
+
+        # F.softplus(x) = log(1 + exp(x)) is a stable way to compute -log σ(-x)
         policy_loss = F.softplus(-self.beta * diff).mean()  # == -log σ(β*diff)
 
         # Interpretation: we want pi_pos - pi_neg to be larger than ref_pos - ref_neg by a margin of 1/beta.
         # Typically, ref_pos - ref_neg is close to 0, so we want pi_pos - pi_neg to be positive and large.
-        # (the larger beta is, the stronger the margin)
+        # (the smaller the beta, the larger the margin 1/beta)
 
-        # Optional metric: pairwise accuracy (don’t cast to int before mean!)
-        # pair_acc = (diff > 0).float().mean().item()
-
-        # (you can log pair_acc elsewhere)
-        return policy_loss, diff.detach()
+        return (
+            policy_loss,
+            diff.detach(),
+            pi_pos.detach(),
+            pi_neg.detach(),
+            ref_pos.detach(),
+            ref_neg.detach(),
+        )
