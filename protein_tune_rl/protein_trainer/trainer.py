@@ -7,6 +7,7 @@ import torch.distributed as dist
 
 from protein_tune_rl import logger
 
+
 class Trainer(ABC):
     def __init__(self, config):
         self.config = config
@@ -78,7 +79,7 @@ class Trainer(ABC):
                 "cuda": self._gather_cuda_rng_states(),
                 "numpy": np.random.get_state(),
                 "python": random.getstate(),
-            }
+            },
         }
         if hasattr(self, "value"):
             state["value"] = self._unwrap_ddp_model(self.value).state_dict()

@@ -284,9 +284,7 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
                 current_step += 1
 
                 if current_step % self.check_point_freq == 0:
-                    self._save_checkpoint(
-                        exp_output_dir, self.opt_name, current_step
-                    )
+                    self._save_checkpoint(exp_output_dir, self.opt_name, current_step)
 
                 if dist.get_rank() == 0:
                     step_log = pd.DataFrame(
