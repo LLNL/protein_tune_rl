@@ -88,7 +88,6 @@ class Trainer(ABC):
             except Exception as e:
                 logger.error(f"Checkpoint save FAILED: {e}")
                 raise
-        dist.barrier()
 
     def _load_checkpoint(self, ckpt_path, device):
         if device.type == "cpu":
