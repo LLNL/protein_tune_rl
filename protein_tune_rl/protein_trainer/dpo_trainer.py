@@ -18,15 +18,6 @@ class DPOTrainer(Trainer):
     def __init__(self, config):
         """Initialize the DPO Trainer with the provided configuration."""
         super().__init__(config)
-        self.config = config
-
-        # Set device (use GPU if available)
-        if torch.cuda.is_available():
-            self.device_ids = [torch.cuda.current_device()]
-            self.device = torch.device("cuda", self.device_ids[0])
-        else:
-            self.device_ids = None
-            self.device = torch.device("cpu")
 
         # Training hyperparameters
         self.total_optimization_steps = config["trainer"]["total_optimization_steps"]
@@ -108,14 +99,6 @@ class DPOTrainer(Trainer):
 
             eval_policy = self._unwrap_ddp_model(self.policy)
             self.evaluator = IGLMEvaluator(config, policy_model=eval_policy)
-
-    def _unwrap_ddp_model(self, model):
-        """Unwrap DDP to get the underlying model module."""
-        return (
-            model.module
-            if isinstance(model, torch.nn.parallel.DistributedDataParallel)
-            else model
-        )
 
     def save_models(self, output_dir, current_step):
         """Save model checkpoints (policy state dict and full model)."""

@@ -23,17 +23,6 @@ class DROTrainer(Trainer):
         """
         super().__init__(config)
 
-        # Store the configuration.
-        self.config = config
-
-        # Catch with device is available.
-        if torch.cuda.is_available():
-            self.device_ids = [torch.cuda.current_device()]
-            self.device = torch.device("cuda", self.device_ids[0])
-        else:
-            self.device_ids = None
-            self.device = torch.device("cpu")
-
         self.total_optimization_steps = self.config["trainer"][
             "total_optimization_steps"
         ]
@@ -120,14 +109,6 @@ class DROTrainer(Trainer):
             # If DDP-wrapped, pass .module (unwrap the DDP model)
             eval_policy = self._unwrap_ddp_model(self.policy)
             self.evaluator = IGLMEvaluator(self.config, policy_model=eval_policy)
-
-    def _unwrap_ddp_model(self, model):
-        """Unwrap DDP model to get the underlying model."""
-        return (
-            model.module
-            if isinstance(model, torch.nn.parallel.DistributedDataParallel)
-            else model
-        )
 
     def save_models(self, output_dir, current_step):
         """Save both state dict and full model checkpoints."""

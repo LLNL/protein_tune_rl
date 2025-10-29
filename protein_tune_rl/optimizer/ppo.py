@@ -39,14 +39,11 @@ class StateValue(nn.Module):
         output *= kwargs["attention_mask"]
         return output.sum(1) / length
 
-    def save(self, path) -> None:
-        self.model.save_pretrained(path)
-
 
 class PPO:
     def __init__(
         self,
-        model: nn.Module,
+        policy: nn.Module,
         learning_rate: float = 1e-3,
         clip: float = 0.2,
         minibatch_size: int = 2,
@@ -60,8 +57,8 @@ class PPO:
         self.baseline = baseline
         self.normalize_adv = normalize_advantage
 
-        self.model = model
-        self.policy_optimizer = Adam(model.parameters(), lr=learning_rate, eps=1e-5)
+        self.policy = policy
+        self.policy_optimizer = Adam(policy.parameters(), lr=learning_rate, eps=1e-5)
 
         if torch.cuda.is_available():
             self.device = torch.cuda.current_device()
@@ -69,7 +66,7 @@ class PPO:
             self.device = "cpu"
 
         if baseline == "state_value":
-            state_value = StateValue(model, "value_function")
+            state_value = StateValue(policy, "value_function")
             state_value.eval()
             state_value.to(self.device)
             if torch.cuda.is_available():
@@ -82,7 +79,7 @@ class PPO:
             )
 
     def _compute_clip_loss(self, adv, old_logp, state, action):
-        logp = compute_logp(self.model, state, action)
+        logp = compute_logp(self.policy, state, action)
         ratios = torch.exp(logp - old_logp)
 
         surr1 = ratios * adv

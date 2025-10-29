@@ -5,11 +5,11 @@ from torch.optim import Adam
 class Reinforce:
     def __init__(
         self,
-        model: torch.nn.Module,
+        policy: torch.nn.Module,
         learning_rate: float = 1e-3,
         entropy_weight: float = 5e-3,
     ):
-        self.optimizer = Adam(model.parameters(), lr=learning_rate)
+        self.policy_optimizer = Adam(policy.parameters(), lr=learning_rate)
         self.entropy_weight = entropy_weight
 
     def _compute_loss(self, reward, baseline, logp, entropy):
@@ -18,7 +18,7 @@ class Reinforce:
         )
 
     def step(self, reward, baseline, logp, entropy, sequences):
-        self.optimizer.zero_grad()
+        self.policy_optimizer.zero_grad()
         loss = self._compute_loss(reward, baseline, logp, entropy)
         loss.backward()
-        self.optimizer.step()
+        self.policy_optimizer.step()
