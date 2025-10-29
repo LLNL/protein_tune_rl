@@ -103,6 +103,6 @@ class Trainer(ABC):
 
         return ckpt
 
-    def _load_state_dict(self, obj, state_dict):
+    def _maybe_load_state_dict(self, obj, state_dict):
         if self.ckpt and self.ckpt.get(state_dict) is not None:
             self._unwrap_ddp_model(obj).load_state_dict(self.ckpt[state_dict])

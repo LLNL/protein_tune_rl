@@ -81,10 +81,7 @@ class OnlineRLSampler:
             vocab_size=self.tokenizer.vocab_size,
             attn_implementation=self.attn_impl,
         ).to(self.device)
-
-        if self.ckpt is not None:
-            self.policy.load_state_dict(self.ckpt["policy"])
-
+        self._maybe_load_state_dict(self.policy, "policy")
         self.policy.eval()
         self.policy = DDP(self.policy, device_ids=self.device_ids)
 
@@ -239,9 +236,9 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
         self.value = self.optimizer.state_value if use_value else None
         self.value_optimizer = self.optimizer.value_optimizer if use_value else None
 
-        self._load_state_dict(self.policy_optimizer, "policy_optimizer")
-        self._load_state_dict(self.value, "value")
-        self._load_state_dict(self.value_optimizer, "value_optimizer")
+        self._maybe_load_state_dict(self.value, "value")
+        self._maybe_load_state_dict(self.policy_optimizer, "policy_optimizer")
+        self._maybe_load_state_dict(self.value_optimizer, "value_optimizer")
 
         assert len(self.metrics) == 1, "only single metric is supported"
         self.metric = list(self.metrics.values())[0]
