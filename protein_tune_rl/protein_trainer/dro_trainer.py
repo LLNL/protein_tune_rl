@@ -227,9 +227,7 @@ class DROTrainer(Trainer):
 
     def _maybe_save_models(self, output_dir, current_step):
         if self.config["trainer"].get("save_models", True):
-            if dist.get_rank() == 0:
-                self._save_checkpoint(output_dir, "dro", current_step)
-            dist.barrier()
+            self._save_checkpoint(output_dir, "dro", current_step)
 
     def _maybe_run_evaluation(self, output_dir, current_step):
         if self.config["trainer"].get("evaluate_during_training", False):

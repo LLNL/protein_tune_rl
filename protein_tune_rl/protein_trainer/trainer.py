@@ -60,15 +60,22 @@ class Trainer(ABC):
     def _should_checkpoint(self, current_step, check_point_freq):
         return (current_step % check_point_freq == 0) and (current_step > 0)
 
+    def _gather_cuda_rng_states(self):
+        wz = dist.get_world_size()
+        rank = dist.get_rank()
+        loc_s = torch.cuda.get_rng_state_all()[rank].to(self.device)
+        out = [torch.empty_like(loc_s, device=self.device) for _ in range(wz)]
+        dist.gather(loc_s, gather_list=(None if rank else out), dst=0)
+        return out if rank == 0 else None
+
     def _save_checkpoint(self, ckpt_dir, tag, step):
         state = {
             "step": step,
             "policy": self._unwrap_ddp_model(self.policy).state_dict(),
             "policy_optimizer": self.policy_optimizer.state_dict(),
-            "cfg": self.config,
             "rng_state": {
                 "torch": torch.get_rng_state(),
-                "cuda": torch.cuda.get_rng_state_all(),
+                "cuda": self._gather_cuda_rng_states(),
                 "numpy": np.random.get_state(),
                 "python": random.getstate(),
             }
@@ -86,6 +93,7 @@ class Trainer(ABC):
             except Exception as e:
                 logger.error(f"Checkpoint save FAILED: {e}")
                 raise
+        dist.barrier()
 
     def _load_checkpoint(self, ckpt_path, device):
         if device.type == "cpu":
@@ -95,7 +103,8 @@ class Trainer(ABC):
         ckpt = torch.load(ckpt_path, map_location, weights_only=False)
 
         torch.set_rng_state(ckpt["rng_state"]["torch"])
-        torch.cuda.set_rng_state_all(ckpt["rng_state"]["cuda"])
+        state = ckpt["rng_state"]["cuda"][dist.get_rank()].cpu()
+        torch.cuda.set_rng_state(state, device=dist.get_rank())
         np.random.set_state(ckpt["rng_state"]["numpy"])
         random.setstate(ckpt["rng_state"]["python"])
 

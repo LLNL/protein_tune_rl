@@ -155,11 +155,8 @@ class DPOTrainer(Trainer):
                         log_df.to_csv(f"{output_dir}/dpo_trainer_log.csv", index=False)
                     dist.barrier()
                     # Save model checkpoints
-                    if dist.get_rank() == 0 and self.config["trainer"].get(
-                        "save_models", True
-                    ):
+                    if self.config["trainer"].get("save_models", True):
                         self._save_checkpoint(output_dir, "dpo", current_step)
-                    dist.barrier()
                     if self.config["trainer"].get("evaluate_during_training", False):
                         # Only run evaluation on one rank (rank 0) to avoid duplication
                         self.run_evaluation(output_dir, current_step)
@@ -168,7 +165,7 @@ class DPOTrainer(Trainer):
                     break
 
         # Final model save
-        if dist.get_rank() == 0:
+        if current_step % self.check_point_freq:
             self._save_checkpoint(output_dir, "dpo", current_step)
         return log_df
 
