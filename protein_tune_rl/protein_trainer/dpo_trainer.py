@@ -56,6 +56,7 @@ class DPOTrainer(Trainer):
             hf_config=config["policy_model"]["dir"],
             vocab_size=self.tokenizer.vocab_size,
         ).to(self.device)
+        self._maybe_load_state_dict(self.policy, "policy")
         self.policy = DDP(self.policy, device_ids=self.device_ids)
 
         # Reference model: load from specified checkpoint or same as policy initialization
@@ -85,6 +86,7 @@ class DPOTrainer(Trainer):
         self.policy_optimizer = self.optimizer_class(
             self.policy.parameters(), lr=self.learning_rate
         )
+        self._maybe_load_state_dict(self.policy_optimizer, "policy_optimizer")
 
         # Enable evaluator if configured (e.g., to monitor generation quality during training)
         if config["trainer"].get("evaluate_during_training", False):
@@ -135,6 +137,10 @@ class DPOTrainer(Trainer):
         # Iterate until reaching total optimization steps
         while current_step < self.total_optimization_steps:
             for batch_idx, raw_batch in enumerate(self.dataloader):
+                if self.ckpt and current_step < self.ckpt["step"]:
+                    current_step += 1
+                    continue
+
                 # Prepare batch (tokenize and collate)
                 batch = self.collator(raw_batch)
                 # Perform one training step
@@ -152,7 +158,7 @@ class DPOTrainer(Trainer):
                     if dist.get_rank() == 0 and self.config["trainer"].get(
                         "save_models", True
                     ):
-                        self.save_models(output_dir, current_step)
+                        self._save_checkpoint(output_dir, "dpo", current_step)
                     dist.barrier()
                     if self.config["trainer"].get("evaluate_during_training", False):
                         # Only run evaluation on one rank (rank 0) to avoid duplication
@@ -163,7 +169,7 @@ class DPOTrainer(Trainer):
 
         # Final model save
         if dist.get_rank() == 0:
-            self.policy.module.save(output_dir / "models/final")
+            self._save_checkpoint(output_dir, "dpo", current_step)
         return log_df
 
     def _train_step(self, batch, current_step, batch_number):

@@ -232,13 +232,12 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
             **config["optimizer"],
         )
         self.policy_optimizer = self.optimizer.policy_optimizer
-        use_value = hasattr(self.optimizer, "state_value")
-        self.value = self.optimizer.state_value if use_value else None
-        self.value_optimizer = self.optimizer.value_optimizer if use_value else None
-
-        self._maybe_load_state_dict(self.value, "value")
         self._maybe_load_state_dict(self.policy_optimizer, "policy_optimizer")
-        self._maybe_load_state_dict(self.value_optimizer, "value_optimizer")
+        if hasattr(self.optimizer, "state_value"):
+            self.value = self.optimizer.state_value
+            self._maybe_load_state_dict(self.value, "value")
+            self.value_optimizer = self.optimizer.value_optimizer
+            self._maybe_load_state_dict(self.value_optimizer, "value_optimizer")
 
         assert len(self.metrics) == 1, "only single metric is supported"
         self.metric = list(self.metrics.values())[0]

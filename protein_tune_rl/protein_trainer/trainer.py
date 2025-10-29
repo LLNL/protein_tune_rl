@@ -65,8 +65,6 @@ class Trainer(ABC):
             "step": step,
             "policy": self._unwrap_ddp_model(self.policy).state_dict(),
             "policy_optimizer": self.policy_optimizer.state_dict(),
-            "value": None,
-            "value_optimizer": None,
             "cfg": self.config,
             "rng_state": {
                 "torch": torch.get_rng_state(),
@@ -75,7 +73,7 @@ class Trainer(ABC):
                 "python": random.getstate(),
             }
         }
-        if self.value is not None:
+        if hasattr(self, "value"):
             state["value"] = self._unwrap_ddp_model(self.value).state_dict()
             state["value_optimizer"] = self.value_optimizer.state_dict()
 

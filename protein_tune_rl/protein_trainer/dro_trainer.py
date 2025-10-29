@@ -74,7 +74,7 @@ class DROTrainer(Trainer):
             vocab_size=self.tokenizer.vocab_size,
             train_all_params=self.train_all_value_params,
         ).to(self.device)
-        self._maybe_load_state_dict(self.policy, "policy")
+        self._maybe_load_state_dict(self.value, "value")
         self.value = DDP(self.value, device_ids=self.device_ids)
 
         self.reference.eval()
