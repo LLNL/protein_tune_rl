@@ -64,7 +64,7 @@ class Trainer(ABC):
     def _gather_cuda_rng_states(self):
         wz = dist.get_world_size()
         rank = dist.get_rank()
-        loc_s = torch.cuda.get_rng_state_all()[rank].to(self.device)
+        loc_s = torch.cuda.get_rng_state_all()[self.device_ids[0]].to(self.device)
         out = [torch.empty_like(loc_s, device=self.device) for _ in range(wz)]
         dist.gather(loc_s, gather_list=(None if rank else out), dst=0)
         return out if rank == 0 else None
@@ -105,7 +105,7 @@ class Trainer(ABC):
 
         torch.set_rng_state(ckpt["rng_state"]["torch"])
         state = ckpt["rng_state"]["cuda"][dist.get_rank()].cpu()
-        torch.cuda.set_rng_state(state, device=dist.get_rank())
+        torch.cuda.set_rng_state(state, device=self.device)
         np.random.set_state(ckpt["rng_state"]["numpy"])
         random.setstate(ckpt["rng_state"]["python"])
 
