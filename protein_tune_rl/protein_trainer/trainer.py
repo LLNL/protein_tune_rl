@@ -21,10 +21,8 @@ class Trainer(ABC):
             self.device = torch.device("cpu")
 
         self.ckpt = None
-        if "checkpoint" in config and "file" in config["checkpoint"]:
-            ckpt_dir = config["checkpoint"]["dir"]
-            ckpt_file = config["checkpoint"]["file"]
-            ckpt_path = os.path.join(ckpt_dir, ckpt_file)
+        if "checkpoint" in config:
+            ckpt_path = config["checkpoint"]
             self.ckpt = self._load_checkpoint(ckpt_path, self.device)
 
     def run(self):
