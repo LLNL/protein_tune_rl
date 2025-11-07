@@ -18,15 +18,6 @@ class DPOTrainer(Trainer):
     def __init__(self, config):
         """Initialize the DPO Trainer with the provided configuration."""
         super().__init__(config)
-        self.config = config
-
-        # Set device (use GPU if available)
-        if torch.cuda.is_available():
-            self.device_ids = [torch.cuda.current_device()]
-            self.device = torch.device("cuda", self.device_ids[0])
-        else:
-            self.device_ids = None
-            self.device = torch.device("cpu")
 
         # Training hyperparameters
         self.total_optimization_steps = config["trainer"]["total_optimization_steps"]
@@ -65,6 +56,7 @@ class DPOTrainer(Trainer):
             hf_config=config["policy_model"]["dir"],
             vocab_size=self.tokenizer.vocab_size,
         ).to(self.device)
+        self._maybe_load_state_dict(self.policy, "policy")
         self.policy = DDP(self.policy, device_ids=self.device_ids)
 
         # Reference model: load from specified checkpoint or same as policy initialization
@@ -94,6 +86,7 @@ class DPOTrainer(Trainer):
         self.policy_optimizer = self.optimizer_class(
             self.policy.parameters(), lr=self.learning_rate
         )
+        self._maybe_load_state_dict(self.policy_optimizer, "policy_optimizer")
 
         # Enable evaluator if configured (e.g., to monitor generation quality during training)
         if config["trainer"].get("evaluate_during_training", False):
@@ -108,14 +101,6 @@ class DPOTrainer(Trainer):
 
             eval_policy = self._unwrap_ddp_model(self.policy)
             self.evaluator = IGLMEvaluator(config, policy_model=eval_policy)
-
-    def _unwrap_ddp_model(self, model):
-        """Unwrap DDP to get the underlying model module."""
-        return (
-            model.module
-            if isinstance(model, torch.nn.parallel.DistributedDataParallel)
-            else model
-        )
 
     def save_models(self, output_dir, current_step):
         """Save model checkpoints (policy state dict and full model)."""
@@ -152,6 +137,10 @@ class DPOTrainer(Trainer):
         # Iterate until reaching total optimization steps
         while current_step < self.total_optimization_steps:
             for batch_idx, raw_batch in enumerate(self.dataloader):
+                if self.ckpt and current_step < self.ckpt["step"]:
+                    current_step += 1
+                    continue
+
                 # Prepare batch (tokenize and collate)
                 batch = self.collator(raw_batch)
                 # Perform one training step
@@ -166,11 +155,8 @@ class DPOTrainer(Trainer):
                         log_df.to_csv(f"{output_dir}/dpo_trainer_log.csv", index=False)
                     dist.barrier()
                     # Save model checkpoints
-                    if dist.get_rank() == 0 and self.config["trainer"].get(
-                        "save_models", True
-                    ):
-                        self.save_models(output_dir, current_step)
-                    dist.barrier()
+                    if self.config["trainer"].get("save_models", True):
+                        self._save_checkpoint(output_dir, "dpo", current_step)
                     if self.config["trainer"].get("evaluate_during_training", False):
                         # Only run evaluation on one rank (rank 0) to avoid duplication
                         self.run_evaluation(output_dir, current_step)
@@ -179,8 +165,8 @@ class DPOTrainer(Trainer):
                     break
 
         # Final model save
-        if dist.get_rank() == 0:
-            self.policy.module.save(output_dir / "models/final")
+        if current_step % self.check_point_freq:
+            self._save_checkpoint(output_dir, "dpo", current_step)
         return log_df
 
     def _train_step(self, batch, current_step, batch_number):

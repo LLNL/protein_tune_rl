@@ -23,17 +23,6 @@ class DROTrainer(Trainer):
         """
         super().__init__(config)
 
-        # Store the configuration.
-        self.config = config
-
-        # Catch with device is available.
-        if torch.cuda.is_available():
-            self.device_ids = [torch.cuda.current_device()]
-            self.device = torch.device("cuda", self.device_ids[0])
-        else:
-            self.device_ids = None
-            self.device = torch.device("cpu")
-
         self.total_optimization_steps = self.config["trainer"][
             "total_optimization_steps"
         ]
@@ -69,6 +58,7 @@ class DROTrainer(Trainer):
             hf_config=self.config['policy_model']['dir'],
             vocab_size=self.tokenizer.vocab_size,
         ).to(self.device)
+        self._maybe_load_state_dict(self.policy, "policy")
         self.policy = DDP(self.policy, device_ids=self.device_ids)
 
         self.reference = create_model(
@@ -84,6 +74,7 @@ class DROTrainer(Trainer):
             vocab_size=self.tokenizer.vocab_size,
             train_all_params=self.train_all_value_params,
         ).to(self.device)
+        self._maybe_load_state_dict(self.value, "value")
         self.value = DDP(self.value, device_ids=self.device_ids)
 
         self.reference.eval()
@@ -108,6 +99,8 @@ class DROTrainer(Trainer):
         self.value_optimizer = self.optimizer_class(
             self.value.parameters(), lr=self.learning_rate
         )
+        self._maybe_load_state_dict(self.policy_optimizer, "policy_optimizer")
+        self._maybe_load_state_dict(self.value_optimizer, "value_optimizer")
 
         if self.config["trainer"].get("evaluate_during_training", False):
             logger.info(
@@ -120,14 +113,6 @@ class DROTrainer(Trainer):
             # If DDP-wrapped, pass .module (unwrap the DDP model)
             eval_policy = self._unwrap_ddp_model(self.policy)
             self.evaluator = IGLMEvaluator(self.config, policy_model=eval_policy)
-
-    def _unwrap_ddp_model(self, model):
-        """Unwrap DDP model to get the underlying model."""
-        return (
-            model.module
-            if isinstance(model, torch.nn.parallel.DistributedDataParallel)
-            else model
-        )
 
     def save_models(self, output_dir, current_step):
         """Save both state dict and full model checkpoints."""
@@ -178,6 +163,9 @@ class DROTrainer(Trainer):
         current_step = 0
         while current_step < self.total_optimization_steps:
             for batch_number, batch in enumerate(iter(self.dataloader)):
+                if self.ckpt and current_step < self.ckpt["step"]:
+                    current_step += 1
+                    continue
 
                 # Perform one training step
                 current_step = self._train_step(batch, current_step, batch_number)
@@ -194,7 +182,8 @@ class DROTrainer(Trainer):
                 if current_step >= self.total_optimization_steps:
                     break
 
-        self._final_save(output_dir)
+        if current_step % self.check_point_freq:
+            self._maybe_save_models(output_dir, current_step)
         return log_df
 
     def _train_step(self, batch, current_step, batch_number):
@@ -238,9 +227,7 @@ class DROTrainer(Trainer):
 
     def _maybe_save_models(self, output_dir, current_step):
         if self.config["trainer"].get("save_models", True):
-            if dist.get_rank() == 0:
-                self.save_models(output_dir, current_step)
-            dist.barrier()
+            self._save_checkpoint(output_dir, "dro", current_step)
 
     def _maybe_run_evaluation(self, output_dir, current_step):
         if self.config["trainer"].get("evaluate_during_training", False):

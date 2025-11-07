@@ -74,22 +74,16 @@ class OnlineRLSampler:
             shuffle=True,
         )
 
-        if torch.cuda.is_available():
-            self.device_ids = [torch.cuda.current_device()]
-            self.device = torch.device("cuda", self.device_ids[0])
-        else:
-            self.device_ids = None
-            self.device = torch.device("cpu")
-
         self.attn_impl = config['policy_model'].get('attn_implementation', "eager")
-        self.model = create_model(
+        self.policy = create_model(
             name="iglm",
             hf_config=config['policy_model']['dir'],
             vocab_size=self.tokenizer.vocab_size,
             attn_implementation=self.attn_impl,
         ).to(self.device)
-        self.model.eval()
-        self.model = DDP(self.model, device_ids=self.device_ids)
+        self._maybe_load_state_dict(self.policy, "policy")
+        self.policy.eval()
+        self.policy = DDP(self.policy, device_ids=self.device_ids)
 
         self.metrics = {}
         for m in config['metric']:
@@ -224,8 +218,8 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
                 self.ref_model, **config["KL_penalty"], device=self.device
             )
 
-        optimizer_name = config["optimizer"].pop("name")
-        if self.attn_impl == "eager" and optimizer_name == "reinforce":
+        self.opt_name = config["optimizer"].pop("name")
+        if self.attn_impl == "eager" and self.opt_name == "reinforce":
             logger.info(
                 "Warning: when the optimizer is 'reinforce', policy_model with"
                 " attn_implementation='eager' can cause RuntimeError during "
@@ -233,10 +227,17 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
             )
 
         self.optimizer = create_optimizer(
-            name=optimizer_name,
-            model=self.model,
+            name=self.opt_name,
+            model=self.policy,
             **config["optimizer"],
         )
+        self.policy_optimizer = self.optimizer.policy_optimizer
+        self._maybe_load_state_dict(self.policy_optimizer, "policy_optimizer")
+        if hasattr(self.optimizer, "state_value"):
+            self.value = self.optimizer.state_value
+            self._maybe_load_state_dict(self.value, "value")
+            self.value_optimizer = self.optimizer.value_optimizer
+            self._maybe_load_state_dict(self.value_optimizer, "value_optimizer")
 
         assert len(self.metrics) == 1, "only single metric is supported"
         self.metric = list(self.metrics.values())[0]
@@ -248,9 +249,13 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
         current_step = 0
         while current_step < self.total_optimization_steps:
             for batch_number, batch in enumerate(iter(self.dataloader)):
+                if self.ckpt and current_step < self.ckpt["step"]:
+                    current_step += 1
+                    continue
+
                 tokenized_batch = self.collator(batch)
                 sampled_seqs, logp, entropy = self._sample_batch(
-                    self.model, tokenized_batch
+                    self.policy, tokenized_batch
                 )
 
                 reward = torch.zeros(len(sampled_seqs))
@@ -278,12 +283,10 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
 
                 current_step += 1
 
-                if dist.get_rank() == 0:
-                    if current_step % self.check_point_freq == 0:
-                        self.model.module.save(
-                            exp_output_dir / f"models/batch{current_step}"
-                        )
+                if current_step % self.check_point_freq == 0:
+                    self._save_checkpoint(exp_output_dir, self.opt_name, current_step)
 
+                if dist.get_rank() == 0:
                     step_log = pd.DataFrame(
                         {
                             "num_samples": [current_step * batch_size],
@@ -302,5 +305,5 @@ class OnlineRLTrainer(Trainer, OnlineRLSampler):
                 if current_step >= self.total_optimization_steps:
                     break
 
-        if dist.get_rank() == 0:
-            self.model.module.save(exp_output_dir / "models/final")
+        if current_step % self.check_point_freq:
+            self._save_checkpoint(exp_output_dir, self.opt_name, current_step)
