@@ -9,7 +9,7 @@ class AATokenizer:
         # os.path.join(trained_models_dir, 'vocab.txt')
         # self.tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained(hf_config + "/")
         self.tokenizer = transformers.BertTokenizerFast(
-            vocab_file=hf_config + "/vocab.txt", do_lower_case=False
+            vocab_file=f"{hf_config}/vocab.txt", do_lower_case=False
         )
         self.tokenizer.add_special_tokens(AATokenizer.conditional_tokens())
         self.vocab_size = len(self.tokenizer)
@@ -46,6 +46,4 @@ class AATokenizer:
 
     def __call__(self, sequence):
         encoding = self.tokenizer(sequence)
-        input_ids = torch.tensor(encoding["input_ids"], dtype=torch.long)
-
-        return input_ids
+        return torch.tensor(encoding["input_ids"], dtype=torch.long)
