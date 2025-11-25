@@ -86,7 +86,7 @@ class Trainer(ABC):
         final_path = os.path.join(ckpt_dir, f"{tag}_s{step}.ckpt")
         if dist.get_rank() == 0:
             try:
-                tmp_final = final_path + ".tmp"
+                tmp_final = f"{final_path}.tmp"
                 torch.save(state, tmp_final)
                 os.replace(tmp_final, final_path)
             except Exception as e:
